@@ -45,6 +45,14 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
       <Portal client:visible />
     </div>
 
+    <!--
+      Voile de lisibilité. Le portail est vivant : sa luminosité change d'une
+      seconde à l'autre, donc aucun réglage du shader ne peut garantir le
+      contraste du texte. On garantit le fond plutôt que d'espérer que
+      l'animation reste sage.
+    -->
+    <div class="hero__scrim" aria-hidden="true"></div>
+
     <div class="shell hero__content">
       <Reveal class="hero__kicker">
         <p class="eyebrow">Vitrine · Logiciels &amp; tutoriels</p>
@@ -218,14 +226,45 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
     position: absolute;
     inset: 0;
     z-index: 0;
-    opacity: 0.85;
-    mask-image: radial-gradient(closest-side at 62% 46%, #000 55%, transparent 100%);
+    opacity: 0.92;
+    /* Le masque sert à fondre les bords du canvas dans le fond, PAS à recadrer
+       le portail. `closest-side` calait son rayon sur la plus petite dimension
+       du hero, soit bien moins que le portail lui-même : les anneaux étaient
+       rognés et le tourbillon éteint. Ellipse explicite, généreuse, dont seule
+       la périphérie s'estompe. */
+    mask-image: radial-gradient(46% 88% at 64% 47%, #000 62%, transparent 100%);
   }
   @media (width < 62rem) {
     .hero__stage {
       inset: -12% 0 auto 0;
       height: 62%;
       opacity: 0.6;
+    }
+  }
+
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    /* Desktop : le texte est à gauche, le portail à droite. */
+    background: linear-gradient(
+      100deg,
+      var(--color-void) 4%,
+      color-mix(in oklab, var(--color-void) 82%, transparent) 34%,
+      color-mix(in oklab, var(--color-void) 35%, transparent) 54%,
+      transparent 68%
+    );
+  }
+  @media (width < 62rem) {
+    /* Mobile : le portail passe au-dessus du texte, le voile devient vertical. */
+    .hero__scrim {
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        color-mix(in oklab, var(--color-void) 55%, transparent) 32%,
+        var(--color-void) 62%
+      );
     }
   }
 
@@ -364,6 +403,11 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
     gap: 1.25rem;
     grid-template-columns: 1fr;
   }
+  /* Chaque carte est enveloppée par <Reveal> : c'est ce wrapper que la grille
+     étire, pas la carte. Sans ces deux règles, une carte au texte plus long
+     rend sa voisine plus courte et la rangée se désaligne. */
+  .grid-cards > :global(*) { height: 100%; }
+  .grid-cards :global(.card) { height: 100%; }
   @media (width >= 46rem) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
   @media (width >= 68rem) { .grid-cards { grid-template-columns: repeat(3, 1fr); } }
 

@@ -48,11 +48,47 @@ const PLASMA_FRAG = /* glsl */ `
     float r = length(p) * 2.0;
     float a = atan(p.y, p.x);
 
-    // Coordonnées polaires « enroulées » : c'est la torsion de a par r qui
-    // donne la spirale, pas une texture qui tourne.
-    float swirl = a * 2.0 + r * 5.5 - uTime * 0.55;
-    float bands = noise(vec2(swirl * 1.4, r * 3.2 - uTime * 0.35));
-    bands = smoothstep(0.25, 0.85, bands);
+    // --- Motif SANS couture ---------------------------------------------
+    // Piège : atan() saute de +PI à -PI sur une demi-droite. Nourrir un bruit
+    // non périodique avec cet angle imprime cette discontinuité dans l'image,
+    // et le tourbillon se retrouve « coupé » par un trait.
+    //
+    // Parade en deux temps :
+    //
+    // 1. La torsion ne dépend QUE du rayon, jamais de l'angle. On s'en sert
+    //    pour faire tourner le plan cartésien sur lui-même : plus on s'éloigne
+    //    du centre, plus le domaine est vrillé. Le bruit est ensuite
+    //    échantillonné dans ce plan tourné — donc en coordonnées continues,
+    //    sans jamais toucher à atan().
+    float twist = r * 5.2 - uTime * 0.5;
+    float cs = cos(twist), sn = sin(twist);
+    vec2 q = mat2(cs, sn, -sn, cs) * p;
+    // Deux octaves. Avec une seule, le centre du disque échantillonne une
+    // zone minuscule du champ de bruit — donc presque constante — et le cœur
+    // du tourbillon devient une nappe laiteuse au lieu de filaments.
+    // La seconde octave apporte le détail qui manque aux petits rayons.
+    // Moyenner deux octaves à poids égaux resserre la distribution autour de
+    // 0.5 et efface le contraste : l'octave large reste dominante.
+    float grain = noise(q * 7.5 + uTime * 0.12) * 0.72
+                + noise(q * 21.0 - uTime * 0.22) * 0.28;
+
+    // 2. Les bras spiralés, eux, ont besoin de l'angle. Mais un sinus dont le
+    //    coefficient angulaire est ENTIER est périodique par construction :
+    //    sin(3(a + 2PI)) == sin(3a). Le raccord est exact, pas approché.
+    float arms = 0.5 + 0.5 * sin(3.0 * a + twist * 2.0);
+
+    // MÉLANGE, surtout pas addition : grain et arms valent chacun 0..1, les
+    // additionner décale la moyenne vers le haut et le disque vire au blanc
+    // opaque (avec un blending additif, l'erreur est spectaculaire).
+    // mix() conserve la moyenne à 0.5 et laisse le seuillage décider.
+    // NB : pas de backtick dans ce commentaire, il fermerait le template literal.
+    // Les bras sont une sinusoïde : ils produisent de larges plages continues,
+    // là où le bruit donne des filaments. Trop pondérés, le tourbillon devient
+    // une masse et le texte posé devant cesse d'être lisible. Ils restent donc
+    // minoritaires, et le seuillage est resserré vers le haut pour ne garder
+    // que les crêtes.
+    float pattern = mix(grain, arms, 0.22);
+    float bands = smoothstep(0.24, 0.84, pattern);
 
     float core = smoothstep(1.0, 0.05, r);
     float edge = smoothstep(1.0, 0.72, r);
@@ -62,9 +98,13 @@ const PLASMA_FRAG = /* glsl */ `
     vec3 hot  = vec3(1.00, 0.94, 0.78);
 
     vec3 col = mix(deep, gold, bands);
-    col = mix(col, hot, pow(core, 3.0) * bands * 0.9);
+    // Exposant élevé : le blanc chaud reste confiné au tout centre. Étalé,
+    // il désature le portail qui cesse de se lire comme de l'or.
+    col = mix(col, hot, pow(core, 4.0) * bands * 0.7);
 
-    float alpha = core * edge * (0.22 + 0.78 * bands);
+    // Petit plancher d'opacité : il donne du corps au disque entre les crêtes.
+    // Il reste bas — au-delà de ~0.2 le portail redevient un voile opaque.
+    float alpha = core * edge * (0.15 + 0.85 * bands) * 0.88;
     gl_FragColor = vec4(col, alpha);
   }
 `;
@@ -97,49 +137,138 @@ function Plasma() {
 }
 
 /* -------------------------------------------------------------------------
-   Poussière stellaire en orbite
+   Étincelles éjectées du portail.
+
+   Chaque particule naît au cœur du tourbillon, spirale vers l'extérieur en
+   accélérant, sort du plan vers la caméra, puis s'éteint et renaît au centre.
+   Le cycle est décalé par particule : le flux paraît continu alors que la
+   population reste constante.
+
+   Le mouvement est calculé sur le CPU (900 particules, une passe de boucle
+   par frame — négligeable) plutôt qu'en shader : les positions restent
+   lisibles et réglables sans recompiler du GLSL.
    ---------------------------------------------------------------------- */
-function Dust({ count = 900 }: { count?: number }) {
+const SPARK_VERT = /* glsl */ `
+  attribute float aSize;
+  attribute float aAlpha;
+  varying float vAlpha;
+  void main() {
+    vAlpha = aAlpha;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    // Taille en perspective : une étincelle proche est plus grosse.
+    // Le facteur est en PIXELS, pas en unités monde : à z ≈ 6, un facteur de
+    // 260 donnait des points de 60 à 200 px qui se fondaient en un nuage
+    // laiteux masquant le portail entier. 30 donne 3 à 10 px — des étincelles.
+    gl_PointSize = aSize * (30.0 / -mv.z);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const SPARK_FRAG = /* glsl */ `
+  precision mediump float;
+  varying float vAlpha;
+  void main() {
+    // Point rond à bord doux : sans ça, gl_Points rend des carrés.
+    float d = length(gl_PointCoord - 0.5);
+    float a = smoothstep(0.5, 0.06, d);
+    if (a <= 0.001) discard;
+    vec3 col = mix(vec3(1.0, 0.72, 0.28), vec3(1.0, 0.95, 0.80), a * 0.6);
+    gl_FragColor = vec4(col, a * vAlpha);
+  }
+`;
+
+const R_BIRTH = 0.12; // rayon d'apparition, au cœur du tourbillon
+const R_DEATH = 4.6; // rayon d'extinction
+
+function Sparks({ count = 900 }: { count?: number }) {
   const points = useRef<THREE.Points>(null);
 
-  const geometry = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    const scale = new Float32Array(count);
+  // État par particule, hors du buffer GPU : angle, rayon, vitesse, dérive.
+  const state = useMemo(() => {
+    const angle = new Float32Array(count);
+    const radius = new Float32Array(count);
+    const speed = new Float32Array(count);
+    const spin = new Float32Array(count);
+    const vz = new Float32Array(count);
+    const z = new Float32Array(count);
+    const size = new Float32Array(count);
+
     for (let i = 0; i < count; i++) {
-      // Distribution en coquille torique autour de l'anneau, épaissie en z
-      // pour que la rotation révèle de la profondeur.
-      const angle = Math.random() * Math.PI * 2;
-      const radius = 1.7 + Math.pow(Math.random(), 1.8) * 2.6;
-      pos[i * 3] = Math.cos(angle) * radius;
-      pos[i * 3 + 1] = Math.sin(angle) * radius * 0.72;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 2.4;
-      scale[i] = Math.random();
+      angle[i] = Math.random() * Math.PI * 2;
+      // Rayons initiaux étalés sur tout le trajet : sinon toutes les
+      // particules partiraient ensemble et on verrait une onde de choc.
+      radius[i] = R_BIRTH + Math.random() * (R_DEATH - R_BIRTH);
+      speed[i] = 0.35 + Math.random() * 0.7;
+      spin[i] = 0.5 + Math.random() * 1.1;
+      vz[i] = 0.12 + Math.random() * 0.5;
+      z[i] = (Math.random() - 0.5) * 0.3;
+      size[i] = 0.6 + Math.random() * 1.7;
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    g.setAttribute('aScale', new THREE.BufferAttribute(scale, 1));
-    return g;
+    return { angle, radius, speed, spin, vz, z, size };
   }, [count]);
+
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+    g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(count), 1));
+    g.setAttribute('aSize', new THREE.BufferAttribute(state.size, 1));
+    // Le frustum culling se base sur la bounding sphere, que l'on ne
+    // recalcule pas à chaque frame : on le désactive plutôt que de risquer
+    // une disparition du nuage entier hors champ.
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), R_DEATH + 1);
+    return g;
+  }, [count, state.size]);
 
   const material = useMemo(
     () =>
-      new THREE.PointsMaterial({
-        color: new THREE.Color('#f3d98c'),
-        size: 0.028,
-        sizeAttenuation: true,
+      new THREE.ShaderMaterial({
+        vertexShader: SPARK_VERT,
+        fragmentShader: SPARK_FRAG,
         transparent: true,
-        opacity: 0.75,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),
     [],
   );
 
-  useFrame((_, dt) => {
-    if (points.current) {
-      points.current.rotation.z += dt * 0.045;
-      points.current.rotation.x += dt * 0.012;
+  useFrame((_, delta) => {
+    if (!points.current) return;
+    // Borne le pas : après un changement d'onglet, delta peut valoir plusieurs
+    // secondes et propulserait toutes les particules hors champ d'un coup.
+    const dt = Math.min(delta, 0.05);
+
+    const pos = geometry.getAttribute('position') as THREE.BufferAttribute;
+    const alpha = geometry.getAttribute('aAlpha') as THREE.BufferAttribute;
+    const { angle, radius, speed, spin, vz, z } = state;
+
+    for (let i = 0; i < count; i++) {
+      // Accélération radiale : lent près du cœur, projeté ensuite.
+      radius[i] += speed[i] * dt * (0.35 + radius[i] * 0.55);
+      // Rotation en 1/r : la particule est happée par le tourbillon au centre
+      // et se redresse en s'éloignant. C'est ce gradient qui donne la spirale.
+      angle[i] += (spin[i] * dt * 1.6) / (0.45 + radius[i]);
+      z[i] += vz[i] * dt;
+
+      if (radius[i] > R_DEATH) {
+        radius[i] = R_BIRTH + Math.random() * 0.1;
+        angle[i] = Math.random() * Math.PI * 2;
+        z[i] = (Math.random() - 0.5) * 0.15;
+        speed[i] = 0.35 + Math.random() * 0.7;
+        vz[i] = 0.12 + Math.random() * 0.5;
+      }
+
+      const r = radius[i];
+      pos.setXYZ(i, Math.cos(angle[i]) * r, Math.sin(angle[i]) * r * 0.88, z[i]);
+
+      // Apparition franche au cœur, extinction longue vers l'extérieur :
+      // on ne doit jamais voir une particule se couper net.
+      const fadeIn = Math.min(1, (r - R_BIRTH) / 0.35);
+      const fadeOut = Math.min(1, (R_DEATH - r) / 1.9);
+      alpha.setX(i, Math.max(0, fadeIn * fadeOut));
     }
+
+    pos.needsUpdate = true;
+    alpha.needsUpdate = true;
   });
 
   return <points ref={points} geometry={geometry} material={material} />;
@@ -226,7 +355,7 @@ function Scene() {
 
       <Rings />
       <Plasma />
-      <Dust />
+      <Sparks />
     </group>
   );
 }

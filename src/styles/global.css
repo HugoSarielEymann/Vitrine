@@ -64,10 +64,16 @@
   --color-blood-700: #8f2318;
 
   /* --- Encres : trois niveaux de texte, calibrés pour rester lisibles sur
-         --color-abyss (contraste AA minimum, AAA sur le niveau 1). --- */
-  --color-ink-100: #f4f1e8;
-  --color-ink-300: #c8c4b8;
-  --color-ink-500: #8e8b81;
+         --color-abyss (contraste AA minimum, AAA sur le niveau 1).
+
+         Volontairement NEUTRES, très légèrement froides. Des gris chauds
+         (beiges) semblent logiques sur un site doré, mais ils couvrent
+         chaque bloc de texte d'un voile jaune et, l'or n'ayant plus rien
+         de froid à quoi s'opposer, il cesse de se lire comme de l'or.
+         Le métal doit être la seule chose dorée à l'écran. --- */
+  --color-ink-100: #f0f2f6;
+  --color-ink-300: #bcc2cd;
+  --color-ink-500: #828997;
 
   /* --- Typographie --- */
   --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
@@ -350,8 +356,11 @@
     inset: 0;
     z-index: 100;
     pointer-events: none;
-    opacity: 0.035;
-    mix-blend-mode: overlay;
+    opacity: 0.03;
+    /* `overlay` amplifie la saturation de ce qu'il recouvre : sur un fond
+       déjà chaud, il renforçait le voile jaune au lieu de rester neutre.
+       `soft-light` ajoute le grain sans toucher à la teinte. */
+    mix-blend-mode: soft-light;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }

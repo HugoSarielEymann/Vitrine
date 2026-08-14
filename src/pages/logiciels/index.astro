@@ -73,6 +73,9 @@ const logiciels = (await getCollection('logiciels')).sort(
     gap: 1.25rem;
     grid-template-columns: 1fr;
   }
+  /* Voir index.astro : le wrapper <Reveal> s'étire, la carte doit suivre. */
+  .catalogue__grid > :global(*) { height: 100%; }
+  .catalogue__grid :global(.card) { height: 100%; }
   @media (width >= 46rem) { .catalogue__grid { grid-template-columns: repeat(2, 1fr); } }
   @media (width >= 72rem) { .catalogue__grid { grid-template-columns: repeat(3, 1fr); } }
 </style>

@@ -34,9 +34,9 @@ const { intensity = 1 } = Astro.props;
        du site — halo chaud en bas, vide froid en haut. */
     background:
       radial-gradient(
-        120% 80% at 50% 108%,
-        color-mix(in oklab, var(--color-gold-700) 45%, transparent) 0%,
-        transparent 60%
+        95% 62% at 50% 110%,
+        color-mix(in oklab, var(--color-gold-700) 42%, transparent) 0%,
+        transparent 58%
       ),
       radial-gradient(
         90% 60% at 12% 8%,
@@ -156,17 +156,23 @@ const { intensity = 1 } = Astro.props;
       vec3 amber  = vec3(0.520, 0.330, 0.085);
 
       vec3 col = mix(azure, violet, smoothstep(0.15, 0.85, n1));
-      col = mix(col, amber, pow(mask, 2.2) * 0.5);
+      col = mix(col, amber, pow(mask, 2.2) * 0.32);
       col *= mask * 0.85;
 
       // --- Source de lumière dorée, en bas ---
       // Toute la direction artistique du site tient à ça : UNE source chaude,
       // basse, hors champ. Le reste du cadre est sa retombée.
-      vec2 sun = vec2(0.0, -0.72 + uScroll * 0.22);
-      float sd = length((p - sun) * vec2(0.62, 1.0));
-      float glow = exp(-sd * 2.15);
-      col += vec3(0.95, 0.66, 0.24) * glow * 0.62;
-      col += vec3(1.0, 0.86, 0.55) * exp(-sd * 6.0) * 0.28;
+      //
+      // La décroissance est volontairement RAPIDE (exp(-3.1·d) et non -2.15).
+      // Une retombée trop lente ne se lit plus comme une source lumineuse :
+      // elle devient un filtre doré posé sur tout l'écran, qui fait jaunir
+      // le contenu par-dessus. Une source doit avoir un bord.
+      vec2 sun = vec2(0.0, -0.78 + uScroll * 0.22);
+      float sd = length((p - sun) * vec2(0.68, 1.0));
+      float glow = exp(-sd * 3.1);
+      col += vec3(0.95, 0.66, 0.24) * glow * 0.46;
+      // Cœur serré : c'est lui qui porte l'intensité, pas la nappe large.
+      col += vec3(1.0, 0.86, 0.55) * exp(-sd * 6.5) * 0.30;
 
       // --- Étoiles, trois profondeurs ---
       vec2 su = p + par * 0.35;
