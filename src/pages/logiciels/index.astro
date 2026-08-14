@@ -1,0 +1,78 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+import SoftwareCard from '../../components/SoftwareCard.astro';
+
+const logiciels = (await getCollection('logiciels')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<Base
+  title="Logiciels"
+  description="Tous les logiciels : outils d’analyse de marché, générateurs de code, pipelines visuels."
+  intensity={0.75}
+>
+  <header class="shell page-head">
+    <Reveal>
+      <p class="eyebrow">Catalogue</p>
+    </Reveal>
+    <Reveal delay={100}>
+      <h1>Les <em class="gilded">logiciels</em></h1>
+    </Reveal>
+    <Reveal delay={200}>
+      <p class="page-head__lead">
+        Chaque outil part d’un problème que j’ai rencontré pour de vrai. Aucun
+        n’a été écrit pour remplir une ligne de portfolio — et quand un projet
+        est encore instable, c’est écrit dessus.
+      </p>
+    </Reveal>
+  </header>
+
+  <section class="shell catalogue">
+    <div class="catalogue__grid">
+      {
+        logiciels.map((l, i) => (
+          <Reveal delay={(i % 3) * 120}>
+            <SoftwareCard
+              title={l.data.title}
+              slug={l.id}
+              summary={l.data.summary}
+              status={l.data.status}
+              stack={l.data.stack}
+              glyph={l.data.glyph}
+              accent={l.data.accent}
+            />
+          </Reveal>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding-block: clamp(4rem, 10vw, 8rem) 3rem;
+    align-items: flex-start;
+  }
+  .page-head h1 { font-size: var(--step-4); }
+  .page-head h1 em { font-style: italic; }
+  .page-head__lead {
+    max-width: 52ch;
+    font-size: var(--step-1);
+    color: var(--color-ink-500);
+  }
+
+  .catalogue { padding-bottom: 4rem; }
+  .catalogue__grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 46rem) { .catalogue__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 72rem) { .catalogue__grid { grid-template-columns: repeat(3, 1fr); } }
+</style>

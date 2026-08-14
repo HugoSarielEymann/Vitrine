@@ -1,0 +1,221 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+
+const tutoriels = (await getCollection('tutoriels', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const dateFmt = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+// Facettes construites depuis le contenu : pas de liste en dur à maintenir.
+const niveaux = ['tous', ...new Set(tutoriels.map((t) => t.data.level))];
+---
+
+<Base
+  title="Tutoriels"
+  description="Guides pas à pas pour prendre en main chaque logiciel, écrits en suivant réellement les étapes."
+  intensity={0.7}
+>
+  <header class="shell page-head">
+    <Reveal><p class="eyebrow">Apprendre</p></Reveal>
+    <Reveal delay={100}><h1>Les <em class="gilded">tutoriels</em></h1></Reveal>
+    <Reveal delay={200}>
+      <p class="page-head__lead">
+        Chaque guide a été rédigé en exécutant les commandes une à une. Si une
+        étape manque, c’est un bug — écrivez-moi.
+      </p>
+    </Reveal>
+  </header>
+
+  <section class="shell liste">
+    <Reveal class="filtres" role="group" aria-label="Filtrer par niveau">
+      {
+        niveaux.map((n, i) => (
+          <button
+            type="button"
+            class:list={['filtre', { 'is-active': i === 0 }]}
+            data-filtre={n}
+          >
+            {n}
+          </button>
+        ))
+      }
+    </Reveal>
+
+    <ul class="liste__grid">
+      {
+        tutoriels.map((t, i) => (
+          <Reveal as="li" delay={(i % 2) * 110} class="tut-card hairline" data-level={t.data.level}>
+            <a href={`/tutoriels/${t.id}`}>
+              <div class="tut-card__meta">
+                <span class="tut-card__level" data-level={t.data.level}>{t.data.level}</span>
+                <span>{t.data.duration} min</span>
+              </div>
+
+              <h2>{t.data.title}</h2>
+              <p class="tut-card__summary">{t.data.summary}</p>
+
+              <div class="tut-card__foot">
+                <ul class="tut-card__tags">
+                  {t.data.tags.slice(0, 3).map((tag) => <li>{tag}</li>)}
+                </ul>
+                <time datetime={t.data.date.toISOString()}>{dateFmt.format(t.data.date)}</time>
+              </div>
+            </a>
+          </Reveal>
+        ))
+      }
+    </ul>
+
+    <p class="liste__vide" hidden>Aucun tutoriel à ce niveau pour l’instant.</p>
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    align-items: flex-start;
+    padding-block: clamp(4rem, 10vw, 8rem) 2.5rem;
+  }
+  .page-head h1 { font-size: var(--step-4); }
+  .page-head h1 em { font-style: italic; }
+  .page-head__lead { max-width: 52ch; font-size: var(--step-1); color: var(--color-ink-500); }
+
+  .liste { padding-bottom: 4rem; }
+
+  .filtres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; }
+  .filtre {
+    padding: 0.42rem 1rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    border: 1px solid color-mix(in oklab, var(--color-slate-500) 45%, transparent);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-cosmic);
+  }
+  .filtre:hover { color: var(--color-ink-100); border-color: color-mix(in oklab, var(--color-gold-500) 40%, transparent); }
+  .filtre.is-active {
+    color: var(--color-gold-900);
+    background: linear-gradient(160deg, var(--color-gold-200), var(--color-gold-500));
+    border-color: transparent;
+  }
+
+  .liste__grid {
+    display: grid;
+    gap: 1.25rem;
+    list-style: none;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 52rem) { .liste__grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .tut-card {
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(
+      165deg,
+      color-mix(in oklab, var(--color-hull) 62%, transparent),
+      color-mix(in oklab, var(--color-abyss) 80%, transparent)
+    );
+    transition: transform 0.5s var(--ease-cosmic), border-color 0.5s var(--ease-cosmic),
+      box-shadow 0.5s var(--ease-cosmic), opacity 0.35s;
+  }
+  .tut-card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--color-gold-500) 42%, transparent);
+    box-shadow: 0 28px 60px -30px color-mix(in oklab, var(--color-gold-600) 60%, transparent);
+  }
+  .tut-card[hidden] { display: none; }
+
+  .tut-card a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    height: 100%;
+    padding: 1.75rem;
+    color: inherit;
+  }
+
+  .tut-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .tut-card__meta > span + span::before { content: '· '; opacity: 0.5; }
+  .tut-card__level { color: var(--color-plasma-400); }
+  .tut-card__level[data-level='intermédiaire'] { color: var(--color-gold-400); }
+  .tut-card__level[data-level='avancé'] { color: var(--color-ember-300); }
+
+  .tut-card h2 { font-size: var(--step-2); line-height: 1.1; transition: color 0.3s; }
+  .tut-card:hover h2 { color: var(--color-gold-100); }
+  .tut-card__summary { flex: 1; color: var(--color-ink-500); font-size: 0.93rem; }
+
+  .tut-card__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-slate-700) 60%, transparent);
+  }
+  .tut-card__tags { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; }
+  .tut-card__tags li {
+    padding: 0.16rem 0.5rem;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    color: var(--color-ink-300);
+    background: color-mix(in oklab, var(--color-slate-700) 50%, transparent);
+  }
+  .tut-card__foot time { font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-ink-500); }
+
+  .liste__vide {
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--color-ink-500);
+    font-style: italic;
+  }
+</style>
+
+<script>
+  function armFiltres() {
+    const boutons = document.querySelectorAll<HTMLButtonElement>('[data-filtre]');
+    const cartes = document.querySelectorAll<HTMLElement>('.tut-card');
+    const vide = document.querySelector<HTMLElement>('.liste__vide');
+    if (!boutons.length) return;
+
+    boutons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cible = btn.dataset.filtre;
+        boutons.forEach((b) => b.classList.toggle('is-active', b === btn));
+
+        let visibles = 0;
+        cartes.forEach((c) => {
+          const ok = cible === 'tous' || c.dataset.level === cible;
+          c.hidden = !ok;
+          if (ok) visibles++;
+        });
+        if (vide) vide.hidden = visibles > 0;
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', armFiltres);
+</script>

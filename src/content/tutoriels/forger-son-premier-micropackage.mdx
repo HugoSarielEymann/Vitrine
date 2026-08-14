@@ -1,0 +1,119 @@
+---
+title: Forger son premier micropackage
+summary: Du besoin non couvert au package publié, en suivant le workflow MicroForge de bout en bout — recherche, implémentation, aléas, validation.
+logiciel: microforge
+level: découverte
+duration: 12
+date: 2026-07-14
+tags: ['MicroForge', 'C#', 'NuGet']
+---
+
+Avant d'écrire la moindre ligne de code générique, il y a une question à poser,
+et elle n'est pas « comment j'implémente ça ». C'est « est-ce que ça existe
+déjà ». Ce tutoriel suit ce réflexe jusqu'au bout.
+
+## 1. Vérifier la bibliothèque standard
+
+L'erreur la plus coûteuse est de forger un package qui double le framework.
+`Enumerable.Chunk`, `TimeSpan.TryParse`, `System.Text.Json`, `Path`, `Regex`
+couvrent déjà énormément. Si la réponse est là, on s'arrête.
+
+## 2. Interroger le catalogue
+
+```bash
+forge search "découper une séquence en fenêtres glissantes"
+```
+
+La recherche est filtrée sur l'écosystème du projet. Trois issues possibles :
+
+- **Un package répond** → on l'ajoute, on le paramètre, on ne le recode pas.
+- **Un package répond presque** → on l'étend de façon rétrocompatible plutôt
+  que d'en créer un second. Un paramètre optionnel, un `bump minor`, et c'est réglé.
+- **Rien ne correspond** → on forge.
+
+## 3. Créer le squelette
+
+```bash
+forge new Micro.Sequence.SlidingWindow \
+  --description "Découpe une séquence en fenêtres glissantes de taille fixe avec pas configurable" \
+  --tags "sequence;fenetrage;streaming"
+```
+
+La description compte : c'est elle qui sera indexée. Une description vague
+condamne le package à ne jamais être retrouvé — donc à être réinventé.
+
+## 4. Implémenter
+
+Une seule responsabilité, une classe d'entrée, une signature générique.
+Les réglages vont dans un type dédié avec des défauts raisonnables :
+
+```csharp
+/// <summary>Options de découpage en fenêtres glissantes.</summary>
+public sealed class SlidingWindowOptions
+{
+    /// <summary>Nombre d'éléments par fenêtre. Doit être strictement positif.</summary>
+    public int Size { get; init; } = 3;
+
+    /// <summary>Avance entre deux fenêtres. 1 = chevauchement maximal.</summary>
+    public int Step { get; init; } = 1;
+
+    /// <summary>Émettre la dernière fenêtre même si elle est incomplète.</summary>
+    public bool EmitPartialTail { get; init; }
+
+    /// <exception cref="ArgumentOutOfRangeException">Si Size ou Step est &lt; 1.</exception>
+    public void Validate()
+    {
+        if (Size < 1) throw new ArgumentOutOfRangeException(nameof(Size));
+        if (Step < 1) throw new ArgumentOutOfRangeException(nameof(Step));
+    }
+}
+```
+
+Rappel des interdits dans `src/` : pas de `Console`, pas de `DateTime.Now`,
+pas de `Thread.Sleep`, pas de `new Random()` sans graine, pas d'accès disque.
+Tout effet non déterministe est **injecté**. Ce n'est pas du purisme : c'est ce
+qui rend le package testable en une milliseconde au lieu d'une seconde.
+
+## 5. Déclarer les aléas
+
+```bash
+forge hazards list
+forge hazards declare Micro.Sequence.SlidingWindow --hazards "null-input;numeric-overflow"
+```
+
+Chaque aléa déclaré doit être **prouvé** par un test portant le trait
+correspondant, sinon la publication est refusée :
+
+```csharp
+[Fact]
+[Trait("hazard", "null-input")]
+public void Windows_ThrowsOnNullSource()
+{
+    IEnumerable<int>? source = null;
+    Assert.Throws<ArgumentNullException>(() => source!.SlidingWindows(new()).ToList());
+}
+```
+
+## 6. Relire, valider, publier
+
+```bash
+forge review   Micro.Sequence.SlidingWindow
+forge validate Micro.Sequence.SlidingWindow
+forge publish  Micro.Sequence.SlidingWindow
+```
+
+`forge review` ne tranche pas, il pose les questions que le validateur ne sait
+pas poser : membres publics jamais testés, exceptions documentées jamais
+provoquées, `TryXxx` susceptibles de lever. Les traiter avant de publier.
+
+> Un refus de publication n'est jamais à contourner. « Quasi-doublon » veut
+> dire qu'un package couvre déjà le besoin : la bonne réponse est de l'utiliser.
+
+## 7. Consommer
+
+```bash
+dotnet add package Micro.Sequence.SlidingWindow --version 1.0.0
+```
+
+Toujours épingler la version exacte. Le jour où l'on veut monter,
+`forge outdated .` propose, et c'est la suite de tests du projet qui tranche.

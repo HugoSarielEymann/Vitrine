@@ -1,0 +1,234 @@
+---
+import { NAV, SITE } from '../consts';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(href + '/');
+---
+
+<header class="nav" data-nav>
+  <a href="#contenu" class="nav__skip">Aller au contenu</a>
+
+  <div class="nav__inner shell">
+    <a href="/" class="brand" aria-label={`${SITE.name} — accueil`}>
+      <span class="brand__sigil" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="15" stroke="url(#bg1)" stroke-width="1.4" />
+          <ellipse cx="20" cy="20" rx="15" ry="6" stroke="url(#bg1)" stroke-width="1.1" opacity=".65" />
+          <ellipse cx="20" cy="20" rx="6" ry="15" stroke="url(#bg1)" stroke-width="1.1" opacity=".4" />
+          <circle cx="20" cy="20" r="3.6" fill="url(#bg2)" />
+          <defs>
+            <linearGradient id="bg1" x1="5" y1="5" x2="35" y2="35">
+              <stop stop-color="#fbeec2" /><stop offset=".55" stop-color="#e0ad3c" /><stop offset="1" stop-color="#94661a" />
+            </linearGradient>
+            <radialGradient id="bg2"><stop stop-color="#fff8e2" /><stop offset="1" stop-color="#e0ad3c" /></radialGradient>
+          </defs>
+        </svg>
+      </span>
+      <span class="brand__text">
+        <strong>{SITE.name}</strong>
+        <small>{SITE.mark}</small>
+      </span>
+    </a>
+
+    <nav class="nav__links" aria-label="Navigation principale">
+      {
+        NAV.map((item) => (
+          <a href={item.href} class:list={['nav__link', { 'is-active': isActive(item.href) }]}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <a href="/#contact" class="nav__cta btn-gold">Me contacter</a>
+
+    <button class="nav__burger" type="button" aria-expanded="false" aria-controls="menu-mobile">
+      <span class="sr-only">Ouvrir le menu</span>
+      <span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="nav__mobile" id="menu-mobile" hidden>
+    <nav aria-label="Navigation mobile">
+      {NAV.map((item) => <a href={item.href} class="nav__mobile-link">{item.label}</a>)}
+      <a href="/#contact" class="nav__mobile-link nav__mobile-link--cta">Me contacter</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    /* Transparent en haut de page, verre teinté dès qu'on défile : la barre
+       n'existe visuellement que quand elle sert. */
+    transition: background 0.45s var(--ease-cosmic), border-color 0.45s var(--ease-cosmic),
+      backdrop-filter 0.45s var(--ease-cosmic);
+    border-bottom: 1px solid transparent;
+  }
+  .nav[data-scrolled] {
+    background: color-mix(in oklab, var(--color-void) 72%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    border-bottom-color: color-mix(in oklab, var(--color-gold-500) 16%, transparent);
+  }
+
+  .nav__skip {
+    position: absolute;
+    left: 50%;
+    translate: -50% -140%;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0 0 10px 10px;
+    background: var(--color-gold-500);
+    color: var(--color-gold-900);
+    font-weight: 600;
+    transition: translate 0.25s;
+  }
+  .nav__skip:focus-visible { translate: -50% 0; }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    min-height: 4.75rem;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: auto;
+  }
+  .brand__sigil {
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: none;
+    filter: drop-shadow(0 0 10px color-mix(in oklab, var(--color-gold-500) 45%, transparent));
+    transition: transform 0.9s var(--ease-cosmic);
+  }
+  .brand:hover .brand__sigil { transform: rotate(120deg); }
+  .brand__sigil svg { width: 100%; height: 100%; }
+  .brand__text { display: flex; flex-direction: column; line-height: 1.15; }
+  .brand__text strong {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--color-ink-100);
+    letter-spacing: 0.01em;
+  }
+  .brand__text small {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+  }
+
+  .nav__links { display: none; gap: 0.35rem; }
+  @media (width >= 62rem) { .nav__links { display: flex; } }
+
+  .nav__link {
+    position: relative;
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    color: var(--color-ink-300);
+    transition: color 0.3s;
+  }
+  .nav__link:hover { color: var(--color-ink-100); }
+  /* Soulignement lumineux qui s'ouvre depuis le centre. */
+  .nav__link::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0.15rem;
+    height: 1px;
+    width: 0;
+    translate: -50% 0;
+    background: linear-gradient(90deg, transparent, var(--color-gold-400), transparent);
+    transition: width 0.4s var(--ease-cosmic);
+  }
+  .nav__link:hover::after { width: 60%; }
+  .nav__link.is-active { color: var(--color-gold-300); }
+  .nav__link.is-active::after { width: 60%; }
+
+  .nav__cta { display: none; padding: 0.6rem 1.3rem; font-size: 0.9rem; }
+  @media (width >= 62rem) { .nav__cta { display: inline-flex; } }
+
+  .nav__burger {
+    display: grid;
+    gap: 5px;
+    padding: 0.7rem;
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 25%, transparent);
+    background: color-mix(in oklab, var(--color-hull) 60%, transparent);
+  }
+  .nav__burger span[aria-hidden] {
+    display: block;
+    width: 20px;
+    height: 1.5px;
+    background: var(--color-gold-300);
+    transition: transform 0.35s var(--ease-cosmic), opacity 0.2s;
+  }
+  .nav__burger[aria-expanded='true'] span:first-of-type { transform: translateY(3.25px) rotate(45deg); }
+  .nav__burger[aria-expanded='true'] span:last-of-type { transform: translateY(-3.25px) rotate(-45deg); }
+  @media (width >= 62rem) { .nav__burger { display: none; } }
+
+  .nav__mobile {
+    border-top: 1px solid color-mix(in oklab, var(--color-gold-500) 14%, transparent);
+    background: color-mix(in oklab, var(--color-void) 94%, transparent);
+    backdrop-filter: blur(20px);
+  }
+  .nav__mobile nav {
+    display: grid;
+    gap: 0.25rem;
+    padding: 1rem var(--gutter) 1.5rem;
+  }
+  .nav__mobile-link {
+    padding: 0.85rem 0.5rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-slate-700) 60%, transparent);
+    font-size: 1.05rem;
+    color: var(--color-ink-100);
+  }
+  .nav__mobile-link--cta { color: var(--color-gold-300); border-bottom: 0; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  function armNav() {
+    const nav = document.querySelector<HTMLElement>('[data-nav]');
+    const burger = nav?.querySelector<HTMLButtonElement>('.nav__burger');
+    const panel = nav?.querySelector<HTMLElement>('.nav__mobile');
+    if (!nav) return;
+
+    const onScroll = () => {
+      if (scrollY > 12) nav.setAttribute('data-scrolled', '');
+      else nav.removeAttribute('data-scrolled');
+    };
+    onScroll();
+    addEventListener('scroll', onScroll, { passive: true });
+
+    burger?.addEventListener('click', () => {
+      const open = burger.getAttribute('aria-expanded') === 'true';
+      burger.setAttribute('aria-expanded', String(!open));
+      if (panel) panel.hidden = open;
+    });
+
+    // Refermer au changement de page évite un menu ouvert sur la vue suivante.
+    document.addEventListener('astro:before-swap', () => {
+      removeEventListener('scroll', onScroll);
+    }, { once: true });
+  }
+
+  // `astro:page-load` couvre le premier chargement ET chaque navigation
+  // View Transitions : un seul point d'accroche, jamais de double liaison.
+  document.addEventListener('astro:page-load', armNav);
+</script>

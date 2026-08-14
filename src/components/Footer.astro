@@ -1,0 +1,123 @@
+---
+import { NAV, SITE, SOCIALS } from '../consts';
+const year = new Date().getFullYear();
+---
+
+<footer class="foot">
+  <div class="foot__horizon" aria-hidden="true"></div>
+
+  <div class="shell foot__inner">
+    <div class="foot__brand">
+      <p class="foot__name gilded">{SITE.name}</p>
+      <p class="foot__tag">{SITE.tagline}</p>
+    </div>
+
+    <nav class="foot__col" aria-label="Pages">
+      <h2 class="foot__title">Navigation</h2>
+      {NAV.map((i) => <a href={i.href}>{i.label}</a>)}
+    </nav>
+
+    <nav class="foot__col" aria-label="Liens externes">
+      <h2 class="foot__title">Ailleurs</h2>
+      {
+        SOCIALS.map((s) => (
+          <a href={s.href} rel="me noopener" target={s.href.startsWith('http') ? '_blank' : undefined}>
+            {s.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <nav class="foot__col" aria-label="Informations légales">
+      <h2 class="foot__title">Légal</h2>
+      <a href="/mentions-legales">Mentions légales</a>
+      <a href="/rss.xml">Flux RSS</a>
+    </nav>
+  </div>
+
+  <div class="shell foot__base">
+    <p>© {year} {SITE.name}. Tous droits réservés.</p>
+    <p class="foot__built">Astro · Tailwind · WebGL — hébergé sur Cloudflare</p>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    position: relative;
+    margin-top: 8rem;
+    padding-top: 6rem;
+    overflow: hidden;
+  }
+
+  /* L'horizon : la même source lumineuse basse que le fond, mais matérialisée.
+     Le site se termine sur un lever de soleil, pas sur une bordure grise. */
+  .foot__horizon {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 160%;
+    aspect-ratio: 3 / 1;
+    translate: -50% -55%;
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--color-gold-500) 32%, transparent),
+      color-mix(in oklab, var(--color-ember-700) 14%, transparent) 55%,
+      transparent 78%
+    );
+    border-top: 1px solid color-mix(in oklab, var(--color-gold-400) 40%, transparent);
+    pointer-events: none;
+  }
+
+  .foot__inner {
+    position: relative;
+    display: grid;
+    gap: 2.75rem;
+    grid-template-columns: 1fr;
+    padding-bottom: 3rem;
+  }
+  @media (width >= 48rem) {
+    .foot__inner { grid-template-columns: 1.6fr repeat(3, 1fr); gap: 2rem; }
+  }
+
+  .foot__name {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1;
+  }
+  .foot__tag {
+    margin-top: 0.75rem;
+    max-width: 30ch;
+    color: var(--color-ink-500);
+    font-size: 0.92rem;
+  }
+
+  .foot__col { display: flex; flex-direction: column; gap: 0.6rem; }
+  .foot__title {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+    margin-bottom: 0.35rem;
+  }
+  .foot__col a {
+    font-size: 0.92rem;
+    color: var(--color-ink-300);
+    width: fit-content;
+    transition: color 0.25s, translate 0.25s var(--ease-cosmic);
+  }
+  .foot__col a:hover { color: var(--color-gold-200); translate: 3px 0; }
+
+  .foot__base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block: 1.5rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-slate-700) 70%, transparent);
+    font-size: 0.78rem;
+    color: var(--color-ink-500);
+  }
+  .foot__built { font-family: var(--font-mono); letter-spacing: 0.04em; }
+</style>

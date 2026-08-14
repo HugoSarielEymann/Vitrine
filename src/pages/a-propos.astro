@@ -1,0 +1,318 @@
+---
+import Base from '../layouts/Base.astro';
+import Reveal from '../components/Reveal.astro';
+import { SOCIALS } from '../consts';
+
+/**
+ * ⚠️ CONTENU À REPRENDRE
+ * La structure est définitive, les faits personnels sont des marqueurs.
+ * Tout ce qui est entre crochets doit être remplacé.
+ */
+
+const jalons = [
+  {
+    annee: '[année]',
+    titre: 'Les premières lignes',
+    texte:
+      '[Remplacer : comment vous êtes venu au code. Une anecdote concrète vaut mieux qu’une déclaration d’intention.]',
+  },
+  {
+    annee: '[année]',
+    titre: '[Formation ou premier poste]',
+    texte: '[Remplacer : ce que vous y avez appris qui sert encore aujourd’hui.]',
+  },
+  {
+    annee: '2026',
+    titre: 'L’atelier',
+    texte:
+      'Trois outils menés en parallèle — MicroForge, StocksScience Analyzer, Standard Program Pipeliner — et la conviction qu’un logiciel non documenté est un logiciel à moitié fini.',
+  },
+];
+
+const convictions = [
+  {
+    titre: 'La rigueur est une forme d’élégance',
+    texte:
+      'Un validateur qui refuse une publication mal formée fait gagner plus de temps qu’il n’en coûte. Les garde-fous ne sont pas des freins, ce sont des rampes.',
+  },
+  {
+    titre: 'Ce qu’un outil interdit le définit',
+    texte:
+      'Interdire l’accès disque dans un micropackage, refuser d’exposer un JSON à l’utilisateur, figer une hypothèse avant de mesurer : chaque interdit est une décision de conception assumée.',
+  },
+  {
+    titre: 'Documenter fait partie de construire',
+    texte:
+      'Un outil dont personne ne sait se servir n’existe pas. Le tutoriel n’est pas un livrable annexe, c’est la dernière étape de la fabrication.',
+  },
+  {
+    titre: 'Un résultat négatif est un résultat',
+    texte:
+      'Savoir qu’une piste ne mène nulle part a une valeur qui augmente avec le temps — à condition de l’avoir écrit quelque part.',
+  },
+];
+---
+
+<Base
+  title="À propos"
+  description="Qui je suis, comment je travaille, et ce qui guide mes choix de conception."
+  intensity={0.65}
+>
+  <!-- ============ EN-TÊTE ============ -->
+  <header class="shell intro">
+    <div class="intro__text">
+      <Reveal><p class="eyebrow">À propos</p></Reveal>
+      <Reveal delay={100}>
+        <h1>
+          Je construis des outils,<br />
+          et j’explique <em class="gilded">comment ils marchent</em>.
+        </h1>
+      </Reveal>
+      <Reveal delay={200}>
+        <p class="intro__lead">
+          [Remplacer par deux phrases à la première personne : qui vous êtes,
+          ce que vous faites, et ce qui vous intéresse vraiment dans ce métier.]
+        </p>
+      </Reveal>
+      <Reveal delay={300}>
+        <p class="intro__body">
+          Ce que vous trouverez ici n’est pas un portfolio d’agence. Ce sont des
+          outils nés de problèmes concrets, avec leurs partis pris, leurs limites,
+          et le mode d’emploi qui permet de s’en servir sans me demander.
+        </p>
+      </Reveal>
+      <Reveal delay={400} class="intro__links">
+        {
+          SOCIALS.map((s) => (
+            <a
+              href={s.href}
+              class="btn-ghost"
+              target={s.href.startsWith('http') ? '_blank' : undefined}
+              rel="noopener"
+            >
+              {s.label}
+            </a>
+          ))
+        }
+      </Reveal>
+    </div>
+
+    <Reveal delay={250} class="intro__portrait">
+      <div class="portrait hairline">
+        <div class="portrait__aura aura" aria-hidden="true"></div>
+        <div class="portrait__slot">
+          <span aria-hidden="true">◎</span>
+          <p>Emplacement portrait</p>
+          <small>Déposer l’image dans <code>public/</code></small>
+        </div>
+      </div>
+    </Reveal>
+  </header>
+
+  <!-- ============ JALONS ============ -->
+  <section class="shell band">
+    <Reveal><p class="eyebrow">Le parcours</p></Reveal>
+    <Reveal delay={100}><h2 class="band__title">Quelques <em class="gilded">jalons</em></h2></Reveal>
+
+    <ol class="jalons">
+      {
+        jalons.map((j, i) => (
+          <Reveal as="li" delay={i * 140} class="jalon">
+            <span class="jalon__marker" aria-hidden="true"></span>
+            <span class="jalon__annee">{j.annee}</span>
+            <div class="jalon__contenu">
+              <h3>{j.titre}</h3>
+              <p>{j.texte}</p>
+            </div>
+          </Reveal>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- ============ CONVICTIONS ============ -->
+  <section class="shell band">
+    <Reveal><p class="eyebrow">La méthode</p></Reveal>
+    <Reveal delay={100}>
+      <h2 class="band__title">Ce dont je suis <em class="gilded">convaincu</em></h2>
+    </Reveal>
+
+    <div class="convictions">
+      {
+        convictions.map((c, i) => (
+          <Reveal delay={(i % 2) * 120} class="conviction hairline">
+            <h3>{c.titre}</h3>
+            <p>{c.texte}</p>
+          </Reveal>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- ============ OUTILS ============ -->
+  <section class="shell band">
+    <Reveal><p class="eyebrow">L’atelier</p></Reveal>
+    <Reveal delay={100}><h2 class="band__title">Ce avec quoi je <em class="gilded">travaille</em></h2></Reveal>
+
+    <Reveal delay={200} class="outils">
+      {
+        [
+          ['Langages', 'C#, TypeScript, Python'],
+          ['Interfaces', 'WinUI 3, Astro, React'],
+          ['Données', 'Pandas, SQL, formats versionnés'],
+          ['Méthode', 'Tests d’abord, contraintes assumées, documentation intégrée'],
+        ].map(([titre, contenu]) => (
+          <div class="outil">
+            <h3>{titre}</h3>
+            <p>{contenu}</p>
+          </div>
+        ))
+      }
+    </Reveal>
+  </section>
+</Base>
+
+<style>
+  /* ---------- INTRO ---------- */
+  .intro {
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+    padding-block: clamp(4rem, 10vw, 8rem) 3rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 62rem) {
+    .intro { grid-template-columns: 1.25fr 1fr; gap: 4rem; }
+  }
+
+  .intro__text { display: flex; flex-direction: column; gap: 1.2rem; align-items: flex-start; }
+  .intro h1 { font-size: var(--step-4); }
+  .intro h1 em { font-style: italic; }
+  .intro__lead { font-size: var(--step-1); color: var(--color-ink-300); max-width: 46ch; }
+  .intro__body { color: var(--color-ink-500); max-width: 52ch; }
+  .intro__links { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.5rem; }
+
+  .portrait {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 22px;
+    overflow: hidden;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--color-hull) 75%, transparent),
+      color-mix(in oklab, var(--color-abyss) 92%, transparent)
+    );
+  }
+  .portrait__aura {
+    width: 24rem; height: 24rem;
+    top: -30%; left: 50%;
+    translate: -50% 0;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--color-gold-500) 35%, transparent),
+      transparent
+    );
+  }
+  .portrait__slot { text-align: center; color: var(--color-ink-500); display: grid; gap: 0.5rem; }
+  .portrait__slot span { font-size: 3rem; color: var(--color-gold-600); }
+  .portrait__slot p { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; }
+  .portrait__slot small { font-size: 0.72rem; }
+  .portrait__slot code {
+    font-family: var(--font-mono);
+    color: var(--color-gold-400);
+  }
+
+  /* ---------- BANDES ---------- */
+  .band { padding-block: clamp(3rem, 8vw, 6rem); }
+  .band__title { font-size: var(--step-3); margin-block: 0.75rem 2.5rem; }
+  .band__title em { font-style: italic; }
+
+  /* ---------- JALONS ---------- */
+  .jalons { list-style: none; display: grid; gap: 0; }
+  .jalon {
+    position: relative;
+    display: grid;
+    gap: 0.35rem 1.75rem;
+    grid-template-columns: auto 1fr;
+    padding-bottom: 2.75rem;
+  }
+  /* Ligne de vie : un dégradé, pas un trait plein — elle naît et s'éteint. */
+  .jalon::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1.4rem;
+    bottom: -0.4rem;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-gold-500) 55%, transparent),
+      color-mix(in oklab, var(--color-gold-500) 8%, transparent)
+    );
+  }
+  .jalon:last-child::before { display: none; }
+
+  .jalon__marker {
+    grid-row: 1 / span 2;
+    width: 11px; height: 11px;
+    margin-top: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-gold-400);
+    box-shadow: 0 0 14px var(--color-gold-500);
+  }
+  .jalon__annee {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--color-gold-500);
+    padding-top: 0.35rem;
+  }
+  .jalon__contenu { grid-column: 2; }
+  .jalon__contenu h3 { font-size: var(--step-1); margin-bottom: 0.4rem; }
+  .jalon__contenu p { color: var(--color-ink-500); max-width: 58ch; font-size: 0.94rem; }
+
+  /* ---------- CONVICTIONS ---------- */
+  .convictions {
+    display: grid;
+    gap: 1.15rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 52rem) { .convictions { grid-template-columns: repeat(2, 1fr); } }
+
+  .conviction {
+    padding: 1.75rem;
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--color-hull) 48%, transparent);
+    transition: border-color 0.45s var(--ease-cosmic), transform 0.45s var(--ease-cosmic);
+  }
+  .conviction:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--color-gold-500) 40%, transparent);
+  }
+  .conviction h3 { font-size: var(--step-1); margin-bottom: 0.6rem; color: var(--color-gold-100); }
+  .conviction p { color: var(--color-ink-500); font-size: 0.94rem; }
+
+  /* ---------- OUTILS ---------- */
+  .outils {
+    display: grid;
+    gap: 1.5rem 2.5rem;
+    grid-template-columns: 1fr;
+    padding-top: 1.75rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-slate-700) 65%, transparent);
+  }
+  @media (width >= 46rem) { .outils { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 68rem) { .outils { grid-template-columns: repeat(4, 1fr); } }
+
+  .outil h3 {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+    margin-bottom: 0.55rem;
+  }
+  .outil p { color: var(--color-ink-300); font-size: 0.92rem; }
+</style>

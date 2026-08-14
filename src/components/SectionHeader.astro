@@ -1,0 +1,47 @@
+---
+import Reveal from './Reveal.astro';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  align?: 'start' | 'center';
+  class?: string;
+}
+const { eyebrow, title, lead, align = 'start', class: className } = Astro.props;
+---
+
+<Reveal class:list={['sec', `sec--${align}`, className]}>
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <h2 class="sec__title" set:html={title} />
+  {lead && <p class="sec__lead">{lead}</p>}
+</Reveal>
+
+<style>
+  .sec {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    max-width: 52rem;
+  }
+  .sec--center {
+    align-items: center;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .sec__title {
+    font-size: var(--step-3);
+  }
+  /* `.gilded` posé depuis le markdown du titre permet de dorer un seul mot :
+     <SectionHeader title="Mes <em class='gilded'>logiciels</em>" /> */
+  .sec__title :global(em) { font-style: italic; }
+
+  .sec__lead {
+    max-width: 46ch;
+    color: var(--color-ink-500);
+    font-size: var(--step-1);
+    line-height: 1.55;
+  }
+</style>

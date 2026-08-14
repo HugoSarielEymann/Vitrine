@@ -1,0 +1,295 @@
+---
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+
+/** PISTE 1 — « Nébuleuse » : immersif, typographie monumentale, parallaxe. */
+const chapitres = [
+  {
+    num: 'I',
+    titre: 'Forger',
+    texte: 'Transformer le code jetable en capital réutilisable.',
+    couleur: 'gold',
+  },
+  {
+    num: 'II',
+    titre: 'Mesurer',
+    texte: 'Poser des questions auxquelles les données peuvent répondre non.',
+    couleur: 'plasma',
+  },
+  {
+    num: 'III',
+    titre: 'Assembler',
+    texte: 'Composer des traitements sans jamais voir la tuyauterie.',
+    couleur: 'nebula',
+  },
+];
+---
+
+<Base title="Labo — Nébuleuse" description="Piste de design immersive." intensity={1}>
+  <div class="labo-bar shell">
+    <a href="/labo">← Labo</a>
+    <span>Piste 1 · Nébuleuse</span>
+    <span class="labo-bar__tag">Immersif</span>
+  </div>
+
+  <!-- ===== OUVERTURE ===== -->
+  <section class="ouverture">
+    <div class="ouverture__aura aura" aria-hidden="true"></div>
+    <div class="shell">
+      <p class="ouverture__eyebrow">Direction artistique · 01</p>
+      <h1 class="ouverture__titre" data-parallax="0.14">
+        <span class="ligne">CE QUI</span>
+        <span class="ligne ligne--or">RESTE</span>
+        <span class="ligne">APRÈS</span>
+      </h1>
+      <p class="ouverture__sous" data-parallax="-0.06">
+        Chaque projet devrait laisser derrière lui quelque chose que le suivant
+        n’aura pas à redécouvrir.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== BANDEAU DÉFILANT ===== -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      {
+        Array.from({ length: 4 }).map(() => (
+          <span>
+            MICROFORGE <i>✦</i> STOCKSSCIENCE <i>✦</i> PIPELINER <i>✦</i>
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- ===== CHAPITRES ===== -->
+  {
+    chapitres.map((c, i) => (
+      <section class="chapitre" data-couleur={c.couleur} data-invert={i % 2 === 1}>
+        <div class="shell chapitre__inner">
+          <Reveal class="chapitre__num" delay={0}>
+            <span data-parallax="0.09">{c.num}</span>
+          </Reveal>
+          <Reveal class="chapitre__texte" delay={140}>
+            <h2>{c.titre}</h2>
+            <p>{c.texte}</p>
+            <a href="#" class="chapitre__lien">Lire le chapitre</a>
+          </Reveal>
+        </div>
+      </section>
+    ))
+  }
+
+  <!-- ===== CLÔTURE ===== -->
+  <section class="cloture">
+    <Reveal>
+      <p class="cloture__mot">
+        Un outil <em class="gilded">qu’on ne sait pas prendre en main</em>
+        n’existe pas vraiment.
+      </p>
+    </Reveal>
+  </section>
+</Base>
+
+<style>
+  .labo-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .labo-bar a { color: var(--color-gold-400); }
+  .labo-bar__tag {
+    margin-left: auto;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-nebula-500) 45%, transparent);
+    color: var(--color-nebula-300);
+  }
+
+  /* ---------- OUVERTURE ---------- */
+  .ouverture {
+    position: relative;
+    min-height: 88svh;
+    display: flex;
+    align-items: center;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .ouverture__aura {
+    width: 60rem; height: 60rem;
+    top: -25%; left: 45%;
+    translate: -50% 0;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--color-nebula-500) 30%, transparent),
+      color-mix(in oklab, var(--color-gold-700) 14%, transparent) 55%,
+      transparent
+    );
+  }
+
+  .ouverture__eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+    margin-bottom: 2rem;
+  }
+
+  /* Typographie monumentale : la taille EST le message. `clamp` va jusqu'à
+     11rem, et l'interlignage descend sous 0.8 pour compacter le bloc. */
+  .ouverture__titre {
+    display: grid;
+    font-size: clamp(3.5rem, 15vw, 11rem);
+    line-height: 0.78;
+    letter-spacing: -0.04em;
+    font-family: var(--font-display);
+  }
+  .ligne { display: block; }
+  .ligne--or {
+    background: linear-gradient(100deg, var(--color-gold-100), var(--color-gold-500) 45%, var(--color-ember-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-style: italic;
+    padding-left: 0.12em;
+  }
+
+  .ouverture__sous {
+    margin-top: 2.5rem;
+    max-width: 34ch;
+    font-size: var(--step-1);
+    color: var(--color-ink-300);
+  }
+
+  /* ---------- MARQUEE ---------- */
+  .marquee {
+    overflow: hidden;
+    border-block: 1px solid color-mix(in oklab, var(--color-gold-500) 20%, transparent);
+    padding-block: 1.1rem;
+    background: color-mix(in oklab, var(--color-abyss) 55%, transparent);
+    user-select: none;
+  }
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: slide 38s linear infinite;
+  }
+  .marquee__track span {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-right: 1.5rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 4vw, 2.6rem);
+    letter-spacing: 0.02em;
+    color: color-mix(in oklab, var(--color-gold-300) 55%, transparent);
+    white-space: nowrap;
+  }
+  .marquee__track i { color: var(--color-nebula-300); font-size: 0.6em; font-style: normal; }
+  @keyframes slide { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .marquee__track { animation: none; } }
+
+  /* ---------- CHAPITRES ---------- */
+  .chapitre { padding-block: clamp(5rem, 14vw, 11rem); }
+  .chapitre__inner {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 56rem) {
+    .chapitre__inner { grid-template-columns: 0.8fr 1.2fr; gap: 4rem; }
+    .chapitre[data-invert='true'] .chapitre__inner { direction: rtl; }
+    .chapitre[data-invert='true'] .chapitre__inner > * { direction: ltr; }
+  }
+
+  .chapitre__num span {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 18vw, 14rem);
+    line-height: 0.8;
+    color: transparent;
+    /* Chiffre en contour : présent sans écraser le texte à côté. */
+    -webkit-text-stroke: 1px color-mix(in oklab, var(--teinte) 55%, transparent);
+    opacity: 0.9;
+  }
+  .chapitre[data-couleur='gold'] { --teinte: var(--color-gold-400); }
+  .chapitre[data-couleur='plasma'] { --teinte: var(--color-plasma-400); }
+  .chapitre[data-couleur='nebula'] { --teinte: var(--color-nebula-300); }
+
+  .chapitre__texte h2 {
+    font-size: var(--step-4);
+    margin-bottom: 1rem;
+    color: var(--teinte);
+  }
+  .chapitre__texte p { font-size: var(--step-1); color: var(--color-ink-300); max-width: 34ch; }
+  .chapitre__lien {
+    display: inline-block;
+    margin-top: 1.75rem;
+    padding-bottom: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-100);
+    border-bottom: 1px solid var(--teinte);
+    transition: letter-spacing 0.4s var(--ease-cosmic);
+  }
+  .chapitre__lien:hover { letter-spacing: 0.26em; }
+
+  /* ---------- CLÔTURE ---------- */
+  .cloture {
+    padding-block: clamp(6rem, 16vw, 12rem);
+    text-align: center;
+  }
+  .cloture__mot {
+    max-width: 22ch;
+    margin-inline: auto;
+    font-family: var(--font-display);
+    font-size: var(--step-4);
+    line-height: 1.1;
+    color: var(--color-ink-100);
+  }
+  .cloture__mot em { font-style: italic; }
+</style>
+
+<script>
+  function armParallax() {
+    const cibles = document.querySelectorAll<HTMLElement>('[data-parallax]');
+    if (!cibles.length) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const vh = innerHeight;
+      for (const el of cibles) {
+        const r = el.getBoundingClientRect();
+        // Position de l'élément dans le viewport, normalisée [-1, 1].
+        const centre = (r.top + r.height / 2 - vh / 2) / vh;
+        const force = Number(el.dataset.parallax) || 0;
+        el.style.transform = `translate3d(0, ${(centre * force * vh).toFixed(1)}px, 0)`;
+      }
+    };
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    update();
+
+    document.addEventListener('astro:before-swap', () => {
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', onScroll);
+    }, { once: true });
+  }
+
+  document.addEventListener('astro:page-load', armParallax);
+</script>

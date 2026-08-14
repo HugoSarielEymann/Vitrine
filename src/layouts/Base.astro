@@ -1,0 +1,123 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { SITE } from '../consts';
+import Cosmos from '../components/Cosmos.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+// Fontes auto-hébergées : aucun appel à fonts.googleapis.com. On économise
+// une connexion tierce sur le chemin critique, et le RGPD ne s'en mêle pas.
+import '@fontsource/instrument-serif/400.css';
+import '@fontsource/instrument-serif/400-italic.css';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Atténue le fond animé sur les pages de lecture longue. */
+  intensity?: number;
+  /** Retire la nav collante (pages plein écran). */
+  bare?: boolean;
+}
+
+const {
+  title,
+  description = SITE.description,
+  intensity = 1,
+  bare = false,
+} = Astro.props;
+
+const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url);
+---
+
+<!doctype html>
+<html lang="fr" class="grain">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#04060d" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      Marqueur « JavaScript disponible », posé avant le premier rendu.
+      Les animations d'apparition ne masquent le contenu que si cette classe
+      est là : sans JS, la page s'affiche entière au lieu de rester vide.
+    -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
+    <!-- Navigation persistante entre pages : le fond ne clignote jamais. -->
+    <ClientRouter />
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: SITE.name,
+        url: SITE.url,
+        jobTitle: 'Concepteur de logiciels',
+        description: SITE.description,
+      })}
+    />
+  </head>
+
+  <body>
+    <Cosmos intensity={intensity} />
+
+    {!bare && <Nav />}
+
+    <main id="contenu">
+      <slot />
+    </main>
+
+    {!bare && <Footer />}
+  </body>
+</html>
+
+<style is:global>
+  /* Le fond du site est un canvas fixe : les transitions de page ne doivent
+     surtout pas le faire disparaître pendant le swap. On n'anime que le
+     contenu, avec un fondu montant très court. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root) {
+    animation: vt-out 0.22s var(--ease-gravity) both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-in 0.42s var(--ease-cosmic) both;
+  }
+
+  @keyframes vt-out {
+    to { opacity: 0; transform: translateY(-8px); }
+  }
+  @keyframes vt-in {
+    from { opacity: 0; transform: translateY(12px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) { animation: none; }
+  }
+</style>

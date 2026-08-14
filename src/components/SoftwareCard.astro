@@ -1,0 +1,203 @@
+---
+import StatusPill from './StatusPill.astro';
+import type { StatusKey } from '../consts';
+
+interface Props {
+  title: string;
+  slug: string;
+  summary: string;
+  status: StatusKey;
+  stack?: string[];
+  glyph?: string;
+  /** Accent de la carte : décale la teinte du halo pour éviter la monotonie. */
+  accent?: 'gold' | 'plasma' | 'nebula' | 'ember';
+  featured?: boolean;
+}
+const {
+  title,
+  slug,
+  summary,
+  status,
+  stack = [],
+  glyph = '◈',
+  accent = 'gold',
+  featured = false,
+} = Astro.props;
+---
+
+<article class:list={['card', 'hairline', { 'card--featured': featured }]} data-accent={accent} data-spotlight>
+  <div class="card__glow" aria-hidden="true"></div>
+
+  <header class="card__head">
+    <span class="card__glyph" aria-hidden="true">{glyph}</span>
+    <StatusPill status={status} />
+  </header>
+
+  <h3 class="card__title">
+    <a href={`/logiciels/${slug}`}>
+      {title}
+      <span class="card__hit"></span>
+    </a>
+  </h3>
+
+  <p class="card__summary">{summary}</p>
+
+  {
+    stack.length > 0 && (
+      <ul class="card__stack">
+        {stack.slice(0, 4).map((tech) => (
+          <li>{tech}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  <footer class="card__foot">
+    <span class="card__more">
+      Découvrir
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+        <path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+  </footer>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.75rem;
+    border-radius: 18px;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(
+      165deg,
+      color-mix(in oklab, var(--color-hull) 72%, transparent),
+      color-mix(in oklab, var(--color-abyss) 85%, transparent)
+    );
+    backdrop-filter: blur(12px);
+    transition:
+      transform 0.55s var(--ease-cosmic),
+      border-color 0.55s var(--ease-cosmic),
+      box-shadow 0.55s var(--ease-cosmic);
+  }
+  .card--featured {
+    padding: 2.25rem;
+    gap: 1.25rem;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+    box-shadow: 0 30px 70px -30px color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+
+  /* Projecteur qui suit le curseur. Le JS n'écrit que deux variables ;
+     tout le rendu reste au compositeur, donc aucun reflow. */
+  .card__glow {
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.45s var(--ease-cosmic);
+    background: radial-gradient(
+      22rem 22rem at var(--mx, 50%) var(--my, 0%),
+      color-mix(in oklab, var(--accent) 22%, transparent),
+      transparent 62%
+    );
+  }
+  .card:hover .card__glow { opacity: 1; }
+
+  .card[data-accent='gold'] { --accent: var(--color-gold-500); }
+  .card[data-accent='plasma'] { --accent: var(--color-plasma-400); }
+  .card[data-accent='nebula'] { --accent: var(--color-nebula-500); }
+  .card[data-accent='ember'] { --accent: var(--color-ember-500); }
+
+  .card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .card__glyph {
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--accent);
+    filter: drop-shadow(0 0 12px color-mix(in oklab, var(--accent) 60%, transparent));
+    transition: transform 0.6s var(--ease-cosmic);
+  }
+  .card:hover .card__glyph { transform: rotate(90deg) scale(1.1); }
+
+  .card__title {
+    font-size: var(--step-2);
+    line-height: 1.1;
+  }
+  .card__title a { color: inherit; transition: color 0.3s; }
+  .card:hover .card__title a { color: var(--color-gold-100); }
+  /* Zone cliquable étendue à toute la carte, sans imbriquer de lien. */
+  .card__hit { position: absolute; inset: 0; }
+
+  .card__summary {
+    color: var(--color-ink-500);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    flex: 1;
+  }
+  .card--featured .card__summary { font-size: var(--step-0); }
+
+  .card__stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+  }
+  .card__stack li {
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-300);
+    background: color-mix(in oklab, var(--color-slate-700) 45%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-slate-500) 40%, transparent);
+  }
+
+  .card__foot {
+    padding-top: 0.5rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-slate-700) 55%, transparent);
+  }
+  .card__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .card__more svg { transition: transform 0.4s var(--ease-cosmic); }
+  .card:hover .card__more svg { transform: translateX(4px); }
+</style>
+
+<script>
+  function armSpotlights() {
+    // Un seul écouteur délégué sur le document plutôt qu'un par carte :
+    // avec 20 cartes à l'écran, la différence se sent au scroll.
+    const onMove = (e: PointerEvent) => {
+      const card = (e.target as HTMLElement)?.closest<HTMLElement>('[data-spotlight]');
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    };
+    document.addEventListener('pointermove', onMove, { passive: true });
+    document.addEventListener('astro:before-swap', () => {
+      document.removeEventListener('pointermove', onMove);
+    }, { once: true });
+  }
+
+  document.addEventListener('astro:page-load', armSpotlights);
+</script>

@@ -1,0 +1,59 @@
+---
+title: Premier pipeline en dix minutes
+summary: Assembler une chaîne d’interfaçage complète — lecture, transformation, écriture — sans écrire de configuration ni recompiler quoi que ce soit.
+logiciel: standard-program-pipeliner
+level: découverte
+duration: 10
+date: 2026-08-05
+tags: ['Pipeliner', 'WinUI', 'Interfaçage']
+---
+
+Un pipeline d'interfaçage, c'est trois questions : d'où viennent les données,
+ce qu'on leur fait, où elles vont. Tout le reste est de l'outillage.
+
+## 1. Poser la source
+
+Glisser un nœud **Source** sur le canevas et choisir son type. Le panneau de
+droite affiche ses réglages — chemin, encodage, séparateur. Un aperçu des
+vingt premières lignes apparaît immédiatement sous le nœud.
+
+Cet aperçu est le cœur de l'outil. Il ne se demande pas, il est toujours là.
+On ne configure jamais à l'aveugle.
+
+## 2. Enchaîner une transformation
+
+Tirer un lien depuis la sortie de la source vers un nœud **Transformation**.
+Les colonnes disponibles sont déjà connues : le sélecteur les propose au lieu
+de vous demander de les taper.
+
+Trois transformations couvrent l'essentiel des cas réels :
+
+- **Projeter** — ne garder que les colonnes utiles, les renommer.
+- **Filtrer** — une condition par ligne, composable.
+- **Joindre** — associer une seconde source sur une clé.
+
+## 3. Brancher la sortie
+
+Le nœud **Destination** valide le schéma à la connexion. Si une colonne
+attendue manque, le lien s'affiche en rouge avec le nom du champ fautif —
+avant l'exécution, pas pendant.
+
+## 4. Exécuter
+
+Le bouton **Lancer** interprète le graphe tel quel. Pas de compilation, pas de
+redémarrage : modification et relance s'enchaînent dans la seconde. C'est le
+compromis assumé de l'interpréteur dynamique — on perd en vitesse brute, on
+gagne une boucle de rétroaction immédiate, et sur un travail d'interfaçage
+c'est la boucle qui coûte le plus cher.
+
+## 5. Rejouer
+
+Chaque exécution conserve ses entrées, sa durée et son verdict par nœud.
+Un pipeline qui a échoué hier se rouvre dans l'état exact où il a échoué.
+
+## Ce qu'on ne verra jamais
+
+Aucun JSON, aucun YAML, aucun champ « configuration avancée » contenant du
+texte structuré. Le format de sérialisation existe — il faut bien enregistrer
+le graphe quelque part — mais s'il faut l'ouvrir pour comprendre un pipeline,
+c'est que l'interface a échoué, et c'est l'interface qu'on corrige.

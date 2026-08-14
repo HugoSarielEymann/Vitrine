@@ -1,0 +1,46 @@
+---
+import { STATUS, type StatusKey } from '../consts';
+
+interface Props {
+  status: StatusKey;
+}
+const { status } = Astro.props;
+const meta = STATUS[status] ?? STATUS.stable;
+---
+
+<span class="pill" data-tone={meta.tone}>
+  <span class="pill__dot" aria-hidden="true"></span>
+  {meta.label}
+</span>
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.28rem 0.7rem 0.28rem 0.55rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1px solid color-mix(in oklab, var(--tone) 35%, transparent);
+    background: color-mix(in oklab, var(--tone) 12%, transparent);
+    color: color-mix(in oklab, var(--tone) 78%, white);
+  }
+
+  .pill__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--tone);
+    box-shadow: 0 0 8px var(--tone);
+    animation: var(--animate-pulse-glow);
+  }
+
+  .pill[data-tone='gold'] { --tone: var(--color-gold-500); }
+  .pill[data-tone='plasma'] { --tone: var(--color-plasma-400); }
+  .pill[data-tone='ember'] { --tone: var(--color-ember-500); }
+  .pill[data-tone='nebula'] { --tone: var(--color-nebula-500); }
+</style>

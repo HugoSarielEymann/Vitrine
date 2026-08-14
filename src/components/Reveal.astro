@@ -1,0 +1,53 @@
+---
+/**
+ * Reveal — apparition à l'entrée dans le viewport.
+ *
+ * Un seul IntersectionObserver pour toute la page, posé une fois, qui se
+ * désabonne de chaque élément après son déclenchement. Pas de bibliothèque
+ * d'animation : la transition est en CSS (voir global.css), le JS ne fait
+ * que poser un attribut.
+ */
+interface Props {
+  /** Retard en ms — sert à cascader les éléments d'une même grille. */
+  delay?: number;
+  /** Balise de rendu. */
+  as?: string;
+  class?: string;
+}
+const { delay = 0, as: Tag = 'div', class: className, ...rest } = Astro.props;
+---
+
+<Tag data-reveal class={className} style={`--reveal-delay:${delay}ms`} {...rest}>
+  <slot />
+</Tag>
+
+<script>
+  function armReveals() {
+    const targets = document.querySelectorAll('[data-reveal]:not([data-revealed])');
+    if (!targets.length) return;
+
+    // Sans IntersectionObserver (très vieux navigateur), on affiche tout
+    // immédiatement : jamais de contenu invisible par défaut.
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach((el) => el.setAttribute('data-revealed', ''));
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.setAttribute('data-revealed', '');
+          io.unobserve(entry.target);
+        }
+      },
+      // On déclenche un peu avant l'entrée réelle : le temps que la
+      // transition démarre, l'élément est pile dans le champ.
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.08 },
+    );
+
+    targets.forEach((el) => io.observe(el));
+  }
+
+  document.addEventListener('astro:page-load', armReveals);
+</script>

@@ -1,0 +1,334 @@
+---
+/**
+ * Cosmos — le fond permanent du site.
+ *
+ * Un unique quad plein écran rendu par un fragment shader : nébuleuse FBM +
+ * trois couches d'étoiles parallaxées. Écrit en WebGL brut (≈ 4 ko de JS,
+ * zéro dépendance) parce que three.js pour afficher deux triangles serait
+ * 150 ko gaspillés sur le chemin critique de CHAQUE page.
+ *
+ * Garde-fous : rendu à résolution réduite, mise en pause hors écran et
+ * onglet caché, coupure totale si `prefers-reduced-motion` ou pas de WebGL —
+ * un dégradé CSS statique prend alors le relais et personne ne voit la
+ * différence sur un screenshot.
+ */
+interface Props {
+  /** Intensité globale, 0 → 1. Baissée sur les pages de lecture. */
+  intensity?: number;
+}
+const { intensity = 1 } = Astro.props;
+---
+
+<div class="cosmos" aria-hidden="true" data-intensity={intensity}>
+  <canvas class="cosmos__canvas"></canvas>
+</div>
+
+<style>
+  .cosmos {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    /* Repli statique : visible tant que le shader n'a pas pris la main, et
+       définitivement si WebGL est indisponible. Il porte déjà la composition
+       du site — halo chaud en bas, vide froid en haut. */
+    background:
+      radial-gradient(
+        120% 80% at 50% 108%,
+        color-mix(in oklab, var(--color-gold-700) 45%, transparent) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        90% 60% at 12% 8%,
+        color-mix(in oklab, var(--color-nebula-900) 70%, transparent) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        70% 50% at 88% 22%,
+        color-mix(in oklab, var(--color-astral-800) 55%, transparent) 0%,
+        transparent 70%
+      ),
+      var(--color-void);
+  }
+
+  .cosmos__canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity 1.6s var(--ease-cosmic);
+  }
+  .cosmos__canvas[data-live] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cosmos__canvas {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const VERT = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+
+  const FRAG = `
+    precision highp float;
+
+    uniform vec2  uRes;
+    uniform float uTime;
+    uniform vec2  uPointer;
+    uniform float uScroll;
+    uniform float uIntensity;
+
+    // --- Bruit ------------------------------------------------------------
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      float a = hash21(i);
+      float b = hash21(i + vec2(1.0, 0.0));
+      float c = hash21(i + vec2(0.0, 1.0));
+      float d = hash21(i + vec2(1.0, 1.0));
+      return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+    }
+
+    // Fractal Brownian Motion : 5 octaves, rotation entre chaque pour casser
+    // l'alignement sur la grille (sinon on voit un damier dans la nébuleuse).
+    float fbm(vec2 p) {
+      float v = 0.0;
+      float amp = 0.5;
+      mat2 rot = mat2(0.80, 0.60, -0.60, 0.80);
+      for (int i = 0; i < 5; i++) {
+        v += amp * noise(p);
+        p = rot * p * 2.03;
+        amp *= 0.5;
+      }
+      return v;
+    }
+
+    // --- Étoiles ----------------------------------------------------------
+    // Grille de cellules, une étoile potentielle par cellule, décalée
+    // aléatoirement à l'intérieur pour éviter la régularité.
+    float starLayer(vec2 uv, float density, float t, float seed) {
+      vec2 g  = uv * density + seed;
+      vec2 id = floor(g);
+      vec2 gv = fract(g) - 0.5;
+      float h = hash21(id + seed);
+      float present = step(0.945, h);
+      vec2 off = vec2(hash21(id + 1.7), hash21(id + 3.3)) - 0.5;
+      float d = length(gv - off * 0.72);
+      float size = mix(0.010, 0.038, hash21(id + 9.1));
+      float core = smoothstep(size, 0.0, d);
+      float halo = smoothstep(size * 4.5, 0.0, d) * 0.22;
+      float tw = 0.5 + 0.5 * sin(t * 1.4 + h * 62.0);
+      return (core + halo) * present * tw;
+    }
+
+    void main() {
+      vec2 frag = gl_FragCoord.xy;
+      vec2 uv = frag / uRes;
+      float aspect = uRes.x / uRes.y;
+      vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
+
+      float t = uTime;
+      // Parallaxe : le pointeur et le scroll déplacent les couches de fond
+      // moins vite que le contenu. C'est ce décalage qui crée la profondeur.
+      vec2 par = uPointer * 0.03;
+
+      // --- Nébuleuse ---
+      vec2 np = p * 1.9 + par;
+      float n1 = fbm(np + vec2(t * 0.015, t * 0.009 - uScroll * 0.25));
+      float n2 = fbm(np * 1.8 + n1 * 1.2 - vec2(t * 0.011, 0.0));
+      float mask = smoothstep(0.28, 0.95, n2);
+
+      vec3 violet = vec3(0.170, 0.075, 0.330);
+      vec3 azure  = vec3(0.045, 0.105, 0.280);
+      vec3 amber  = vec3(0.520, 0.330, 0.085);
+
+      vec3 col = mix(azure, violet, smoothstep(0.15, 0.85, n1));
+      col = mix(col, amber, pow(mask, 2.2) * 0.5);
+      col *= mask * 0.85;
+
+      // --- Source de lumière dorée, en bas ---
+      // Toute la direction artistique du site tient à ça : UNE source chaude,
+      // basse, hors champ. Le reste du cadre est sa retombée.
+      vec2 sun = vec2(0.0, -0.72 + uScroll * 0.22);
+      float sd = length((p - sun) * vec2(0.62, 1.0));
+      float glow = exp(-sd * 2.15);
+      col += vec3(0.95, 0.66, 0.24) * glow * 0.62;
+      col += vec3(1.0, 0.86, 0.55) * exp(-sd * 6.0) * 0.28;
+
+      // --- Étoiles, trois profondeurs ---
+      vec2 su = p + par * 0.35;
+      float s = 0.0;
+      s += starLayer(su * 1.00, 11.0, t, 0.0)  * 1.00;
+      s += starLayer(su * 1.55, 17.0, t, 7.3)  * 0.62;
+      s += starLayer(su * 2.30, 26.0, t, 21.9) * 0.36;
+      // Les étoiles s'effacent dans le halo : rien ne brille dans un soleil.
+      s *= 1.0 - clamp(glow * 1.5, 0.0, 0.9);
+      col += vec3(0.92, 0.94, 1.0) * s * 0.85;
+
+      // --- Vignette ---
+      float vig = 1.0 - smoothstep(0.45, 1.25, length(p * vec2(0.85, 1.0)));
+      col *= mix(0.35, 1.0, vig);
+
+      // Plancher très sombre mais jamais noir pur : garde de la matière.
+      col = max(col, vec3(0.016, 0.021, 0.043));
+      col *= uIntensity;
+
+      // Dithering : casse le banding sur les larges dégradés sombres.
+      float dither = (hash21(frag) - 0.5) / 255.0;
+      gl_FragColor = vec4(col + dither, 1.0);
+    }
+  `;
+
+  function boot() {
+    const host = document.querySelector<HTMLElement>('.cosmos');
+    const canvas = host?.querySelector<HTMLCanvasElement>('.cosmos__canvas');
+    if (!host || !canvas) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const gl = canvas.getContext('webgl', {
+      alpha: false,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      powerPreference: 'low-power',
+    });
+    if (!gl) return; // le dégradé CSS reste en place
+
+    const compile = (type: number, src: string) => {
+      const sh = gl.createShader(type)!;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        console.warn('[cosmos]', gl.getShaderInfoLog(sh));
+        return null;
+      }
+      return sh;
+    };
+
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+    if (!vs || !fs) return;
+
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 3, -1, -1, 3]), // un seul grand triangle couvrant
+      gl.STATIC_DRAW,
+    );
+    const loc = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const uRes = gl.getUniformLocation(prog, 'uRes');
+    const uTime = gl.getUniformLocation(prog, 'uTime');
+    const uPointer = gl.getUniformLocation(prog, 'uPointer');
+    const uScroll = gl.getUniformLocation(prog, 'uScroll');
+    const uIntensity = gl.getUniformLocation(prog, 'uIntensity');
+
+    gl.uniform1f(uIntensity, Number(host.dataset.intensity ?? 1));
+
+    // La nébuleuse est floue par nature : la rendre en pleine résolution
+    // rétine ne se voit pas et quadruple le coût. 0.65× suffit.
+    const SCALE = 0.65;
+    const DPR_MAX = 1.5;
+
+    let w = 0;
+    let h = 0;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, DPR_MAX) * SCALE;
+      const nw = Math.max(1, Math.floor(host.clientWidth * dpr));
+      const nh = Math.max(1, Math.floor(host.clientHeight * dpr));
+      if (nw === w && nh === h) return;
+      w = nw;
+      h = nh;
+      canvas.width = w;
+      canvas.height = h;
+      gl.viewport(0, 0, w, h);
+      gl.uniform2f(uRes, w, h);
+    };
+    resize();
+    addEventListener('resize', resize, { passive: true });
+
+    // Pointeur et scroll sont lissés : une valeur brute donne un fond
+    // nerveux qui « colle » au curseur et trahit l'illusion de distance.
+    let px = 0, py = 0, tx = 0, ty = 0;
+    addEventListener(
+      'pointermove',
+      (e) => {
+        tx = (e.clientX / innerWidth - 0.5) * 2;
+        ty = (e.clientY / innerHeight - 0.5) * 2;
+      },
+      { passive: true },
+    );
+
+    let scroll = 0, tScroll = 0;
+    const readScroll = () => {
+      const max = Math.max(1, document.body.scrollHeight - innerHeight);
+      tScroll = Math.min(1, scrollY / max);
+    };
+    addEventListener('scroll', readScroll, { passive: true });
+    readScroll();
+
+    let running = true;
+    let raf = 0;
+    const start = performance.now();
+
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      if (!running) return;
+      px += (tx - px) * 0.045;
+      py += (ty - py) * 0.045;
+      scroll += (tScroll - scroll) * 0.08;
+      gl.uniform1f(uTime, (now - start) / 1000);
+      gl.uniform2f(uPointer, px, -py);
+      gl.uniform1f(uScroll, scroll);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+    raf = requestAnimationFrame(frame);
+
+    // Onglet caché = zéro frame. Un fond animé qui tourne dans un onglet
+    // inactif, c'est de la batterie brûlée pour rien.
+    document.addEventListener('visibilitychange', () => {
+      running = !document.hidden;
+    });
+
+    canvas.dataset.live = '';
+
+    // Astro remplace le DOM entre deux pages (View Transitions) : on libère
+    // le contexte WebGL, sinon le navigateur en accumule et coupe les plus vieux.
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        cancelAnimationFrame(raf);
+        removeEventListener('resize', resize);
+        removeEventListener('scroll', readScroll);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      },
+      { once: true },
+    );
+  }
+
+  document.addEventListener('astro:page-load', boot);
+</script>

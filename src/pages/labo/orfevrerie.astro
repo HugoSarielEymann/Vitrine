@@ -1,0 +1,298 @@
+---
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+
+/** PISTE 2 — « Orfèvrerie » : grille stricte, codes du commerce haut de gamme. */
+const produits = [
+  {
+    ref: 'MF-001',
+    nom: 'MicroForge',
+    ligne: 'Outillage',
+    accroche: 'Bibliothèque de micropackages .NET',
+    specs: [
+      ['Écosystème', 'C# / .NET 9'],
+      ['Distribution', 'NuGet privé'],
+      ['Interface', 'CLI'],
+      ['Maturité', 'Bêta'],
+    ],
+    glyph: '⬡',
+  },
+  {
+    ref: 'SS-002',
+    nom: 'StocksScience',
+    ligne: 'Analyse',
+    accroche: 'Laboratoire d’hypothèses de marché',
+    specs: [
+      ['Écosystème', 'C# / Python'],
+      ['Distribution', 'Application bureau'],
+      ['Interface', 'WinUI 3'],
+      ['Maturité', 'Alpha'],
+    ],
+    glyph: '◎',
+  },
+  {
+    ref: 'SP-003',
+    nom: 'Pipeliner',
+    ligne: 'Interfaçage',
+    accroche: 'Designer visuel de pipelines',
+    specs: [
+      ['Écosystème', 'C#'],
+      ['Distribution', 'Application bureau'],
+      ['Interface', 'WinUI 3'],
+      ['Maturité', 'Bêta'],
+    ],
+    glyph: '⬢',
+  },
+];
+---
+
+<Base title="Labo — Orfèvrerie" description="Piste de design marchand haut de gamme." intensity={0.55}>
+  <div class="labo-bar shell">
+    <a href="/labo">← Labo</a>
+    <span>Piste 2 · Orfèvrerie</span>
+    <span class="labo-bar__tag">Marchand</span>
+  </div>
+
+  <!-- ===== EN-TÊTE ===== -->
+  <header class="shell entete">
+    <Reveal class="entete__filet"><span></span></Reveal>
+    <Reveal delay={80}>
+      <p class="entete__ligne">Collection 2026</p>
+    </Reveal>
+    <Reveal delay={140}>
+      <h1>L’<em class="gilded">Atelier</em></h1>
+    </Reveal>
+    <Reveal delay={220}>
+      <p class="entete__lead">
+        Trois instruments logiciels, conçus séparément, tenus par la même
+        exigence. Chacun est présenté avec ses caractéristiques exactes.
+      </p>
+    </Reveal>
+    <Reveal delay={280} class="entete__filet"><span></span></Reveal>
+  </header>
+
+  <!-- ===== VITRINE ===== -->
+  <section class="shell vitrine">
+    {
+      produits.map((p, i) => (
+        <Reveal delay={i * 130} class="produit">
+          <div class="produit__ecrin">
+            <span class="produit__glyph" aria-hidden="true">{p.glyph}</span>
+            <span class="produit__ref">{p.ref}</span>
+            <div class="produit__reflet" aria-hidden="true"></div>
+          </div>
+
+          <div class="produit__infos">
+            <p class="produit__ligne">{p.ligne}</p>
+            <h2>{p.nom}</h2>
+            <p class="produit__accroche">{p.accroche}</p>
+
+            <table class="produit__specs">
+              <tbody>
+                {p.specs.map(([k, v]) => (
+                  <tr>
+                    <th scope="row">{k}</th>
+                    <td>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <a href="#" class="produit__cta">Consulter la fiche</a>
+          </div>
+        </Reveal>
+      ))
+    }
+  </section>
+
+  <!-- ===== GARANTIES ===== -->
+  <section class="shell garanties">
+    {
+      [
+        ['◈', 'Documenté', 'Chaque outil arrive avec son tutoriel pas à pas.'],
+        ['◇', 'Versionné', 'Versions épinglées, montées proposées, jamais imposées.'],
+        ['◆', 'Testé', 'Les aléas connus sont déclarés et prouvés par un test.'],
+      ].map(([g, t, d], i) => (
+        <Reveal delay={i * 110} class="garantie">
+          <span aria-hidden="true">{g}</span>
+          <h3>{t}</h3>
+          <p>{d}</p>
+        </Reveal>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .labo-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .labo-bar a { color: var(--color-gold-400); }
+  .labo-bar__tag {
+    margin-left: auto;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 45%, transparent);
+    color: var(--color-gold-300);
+  }
+
+  /* ---------- EN-TÊTE ---------- */
+  .entete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    text-align: center;
+    padding-block: clamp(3.5rem, 9vw, 7rem) 4rem;
+  }
+  /* Le filet d'or : signature du registre joaillier. Fin, centré, dégradé. */
+  .entete__filet { width: 100%; }
+  .entete__filet span {
+    display: block;
+    height: 1px;
+    margin-inline: auto;
+    max-width: 34rem;
+    background: linear-gradient(90deg, transparent, var(--color-gold-500), transparent);
+  }
+  .entete__ligne {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+  }
+  .entete h1 { font-size: var(--step-5); line-height: 1; }
+  .entete h1 em { font-style: italic; }
+  .entete__lead { max-width: 46ch; color: var(--color-ink-500); }
+
+  /* ---------- VITRINE ---------- */
+  .vitrine {
+    display: grid;
+    gap: 1px;
+    grid-template-columns: 1fr;
+    /* Grille « à joints » : le fond doré traverse les interstices de 1px.
+       C'est ce qui donne l'impression d'un présentoir serti. */
+    background: color-mix(in oklab, var(--color-gold-700) 30%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-gold-700) 30%, transparent);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  @media (width >= 54rem) { .vitrine { grid-template-columns: repeat(3, 1fr); } }
+
+  .produit {
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in oklab, var(--color-abyss) 92%, transparent);
+    transition: background 0.5s var(--ease-cosmic);
+  }
+  .produit:hover { background: color-mix(in oklab, var(--color-hull) 92%, transparent); }
+
+  .produit__ecrin {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+      radial-gradient(70% 70% at 50% 40%, color-mix(in oklab, var(--color-gold-800) 40%, transparent), transparent 72%),
+      color-mix(in oklab, var(--color-void) 70%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-gold-700) 28%, transparent);
+  }
+  .produit__glyph {
+    font-size: 4.5rem;
+    color: var(--color-gold-400);
+    filter: drop-shadow(0 0 26px color-mix(in oklab, var(--color-gold-500) 55%, transparent));
+    transition: transform 0.8s var(--ease-cosmic);
+  }
+  .produit:hover .produit__glyph { transform: scale(1.08) rotate(-8deg); }
+  .produit__ref {
+    position: absolute;
+    top: 0.9rem; left: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: var(--color-gold-600);
+  }
+  /* Reflet de verre qui balaie l'écrin au survol. */
+  .produit__reflet {
+    position: absolute;
+    inset-block: -50%;
+    left: -60%;
+    width: 45%;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.09), transparent);
+    transform: skewX(-18deg);
+    transition: left 0.9s var(--ease-cosmic);
+  }
+  .produit:hover .produit__reflet { left: 130%; }
+
+  .produit__infos { padding: 1.75rem; display: flex; flex-direction: column; gap: 0.7rem; flex: 1; }
+  .produit__ligne {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+  }
+  .produit__infos h2 { font-size: var(--step-2); }
+  .produit__accroche { color: var(--color-ink-500); font-size: 0.9rem; }
+
+  .produit__specs { width: 100%; margin-top: 0.6rem; border-collapse: collapse; font-size: 0.82rem; }
+  .produit__specs th,
+  .produit__specs td {
+    padding: 0.5rem 0;
+    text-align: left;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-slate-700) 55%, transparent);
+    vertical-align: top;
+  }
+  .produit__specs th {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    font-weight: 400;
+    width: 45%;
+  }
+  .produit__specs td { color: var(--color-ink-100); }
+
+  .produit__cta {
+    margin-top: auto;
+    padding-top: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold-300);
+    transition: letter-spacing 0.4s var(--ease-cosmic);
+  }
+  .produit:hover .produit__cta { letter-spacing: 0.26em; }
+
+  /* ---------- GARANTIES ---------- */
+  .garanties {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    padding-block: clamp(4rem, 9vw, 7rem);
+    text-align: center;
+  }
+  @media (width >= 48rem) { .garanties { grid-template-columns: repeat(3, 1fr); } }
+
+  .garantie span { display: block; font-size: 1.5rem; color: var(--color-gold-500); margin-bottom: 0.9rem; }
+  .garantie h3 {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-ink-100);
+    margin-bottom: 0.5rem;
+  }
+  .garantie p { color: var(--color-ink-500); font-size: 0.88rem; max-width: 32ch; margin-inline: auto; }
+</style>

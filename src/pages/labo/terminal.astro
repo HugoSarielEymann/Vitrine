@@ -1,0 +1,271 @@
+---
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+
+/** PISTE 3 — « Terminal » : monospace, grille apparente, densité maximale. */
+const registre = [
+  ['MICROFORGE', '0.9.2', 'BETA', 'C#/.NET9', '184', 'OK'],
+  ['STOCKSSCIENCE', '0.4.0', 'ALPHA', 'C#/PY', '61', 'WARN'],
+  ['PIPELINER', '0.8.7', 'BETA', 'C#/WINUI', '112', 'OK'],
+  ['TSPOVERLAY', '0.1.0', 'LAB', '—', '3', 'IDLE'],
+];
+
+const journal = [
+  ['2026-08-05', 'pipeliner', 'publication du guide « premier pipeline »'],
+  ['2026-07-28', 'stocksscience', 'protocole d’hypothèse réfutable figé'],
+  ['2026-07-14', 'microforge', 'catalogue d’aléas de test ouvert'],
+  ['2026-06-30', 'microforge', 'validateur : refus des quasi-doublons'],
+];
+---
+
+<Base title="Labo — Terminal" description="Piste de design technique et dense." intensity={0.4}>
+  <div class="grille-fond" aria-hidden="true"></div>
+
+  <div class="labo-bar shell">
+    <a href="/labo">← Labo</a>
+    <span>Piste 3 · Terminal</span>
+    <span class="labo-bar__tag">Technique</span>
+  </div>
+
+  <!-- ===== INVITE ===== -->
+  <header class="shell invite">
+    <Reveal>
+      <p class="invite__prompt">
+        <span class="invite__user">hugo@atelier</span><span class="invite__sep">:</span><span class="invite__path">~/logiciels</span><span class="invite__sep">$</span>
+        <span class="invite__cmd" data-typewriter="ls --status --verbose"></span><span class="invite__caret" aria-hidden="true"></span>
+      </p>
+    </Reveal>
+
+    <Reveal delay={200}>
+      <h1 class="invite__titre">ATELIER<span>/</span>LOGICIELS</h1>
+    </Reveal>
+    <Reveal delay={280}>
+      <p class="invite__lead">
+        4 projets suivis · 3 guides publiés · dernière mise à jour 2026-08-14
+      </p>
+    </Reveal>
+  </header>
+
+  <!-- ===== REGISTRE ===== -->
+  <section class="shell bloc">
+    <Reveal>
+      <h2 class="bloc__titre">[ registre ]</h2>
+    </Reveal>
+    <Reveal delay={100} class="table-wrap">
+      <table class="registre">
+        <thead>
+          <tr>
+            <th>projet</th><th>ver</th><th>canal</th><th>pile</th><th>commits</th><th>état</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            registre.map((l) => (
+              <tr>
+                <td class="registre__nom">{l[0]}</td>
+                <td>{l[1]}</td>
+                <td>{l[2]}</td>
+                <td>{l[3]}</td>
+                <td class="registre__num">{l[4]}</td>
+                <td><span class="etat" data-etat={l[5]}>{l[5]}</span></td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </Reveal>
+  </section>
+
+  <!-- ===== JOURNAL ===== -->
+  <section class="shell bloc">
+    <Reveal><h2 class="bloc__titre">[ journal ]</h2></Reveal>
+    <ul class="journal">
+      {
+        journal.map((j, i) => (
+          <Reveal as="li" delay={i * 80}>
+            <time>{j[0]}</time>
+            <span class="journal__scope">{j[1]}</span>
+            <span class="journal__msg">{j[2]}</span>
+          </Reveal>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ===== SORTIE ===== -->
+  <section class="shell bloc">
+    <Reveal><h2 class="bloc__titre">[ principe ]</h2></Reveal>
+    <Reveal delay={100} class="encart">
+      <pre><code>{`> Un effet non déterministe n'entre pas dans src/.
+> L'horloge, le délai, l'aléa et le disque sont injectés.
+> Ce qui n'est pas testable en isolation n'est pas livrable.`}</code></pre>
+    </Reveal>
+  </section>
+</Base>
+
+<style>
+  /* Grille apparente : le squelette de la mise en page devient décor.
+     `background-size` fixe le pas ; le masque l'éteint vers le bas. */
+  .grille-fond {
+    position: fixed;
+    inset: 0;
+    z-index: -5;
+    pointer-events: none;
+    background-image:
+      linear-gradient(color-mix(in oklab, var(--color-plasma-400) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--color-plasma-400) 7%, transparent) 1px, transparent 1px);
+    background-size: 3rem 3rem;
+    mask-image: linear-gradient(to bottom, #000, transparent 75%);
+  }
+
+  .labo-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .labo-bar a { color: var(--color-gold-400); }
+  .labo-bar__tag {
+    margin-left: auto;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-plasma-400) 45%, transparent);
+    color: var(--color-plasma-300);
+  }
+
+  /* ---------- INVITE ---------- */
+  .invite { padding-block: clamp(3rem, 8vw, 6rem) 3rem; font-family: var(--font-mono); }
+
+  .invite__prompt { font-size: 0.86rem; margin-bottom: 2.5rem; }
+  .invite__user { color: var(--color-plasma-400); }
+  .invite__path { color: var(--color-gold-400); }
+  .invite__sep { color: var(--color-ink-500); margin-inline: 0.15rem 0.4rem; }
+  .invite__cmd { color: var(--color-ink-100); }
+  .invite__caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    translate: 0 0.18em;
+    background: var(--color-gold-400);
+    animation: blink 1.05s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .invite__titre {
+    font-family: var(--font-mono);
+    font-size: clamp(2rem, 7vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--color-ink-100);
+  }
+  .invite__titre span { color: var(--color-gold-500); }
+  .invite__lead { margin-top: 1rem; font-size: 0.82rem; color: var(--color-ink-500); }
+
+  /* ---------- BLOCS ---------- */
+  .bloc { padding-block: 2.5rem; }
+  .bloc__titre {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.2em;
+    color: var(--color-gold-500);
+    margin-bottom: 1.25rem;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  .registre {
+    width: 100%;
+    min-width: 40rem;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+  .registre th,
+  .registre td {
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    border: 1px solid color-mix(in oklab, var(--color-slate-700) 70%, transparent);
+  }
+  .registre thead th {
+    font-size: 0.64rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    background: color-mix(in oklab, var(--color-abyss) 80%, transparent);
+    font-weight: 400;
+  }
+  .registre tbody tr { transition: background 0.25s; }
+  .registre tbody tr:hover { background: color-mix(in oklab, var(--color-gold-900) 30%, transparent); }
+  .registre__nom { color: var(--color-gold-200); }
+  .registre__num { color: var(--color-plasma-400); text-align: right; }
+
+  .etat {
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    border: 1px solid currentColor;
+  }
+  .etat[data-etat='OK'] { color: var(--color-plasma-400); }
+  .etat[data-etat='WARN'] { color: var(--color-ember-300); }
+  .etat[data-etat='IDLE'] { color: var(--color-ink-500); }
+
+  /* ---------- JOURNAL ---------- */
+  .journal { list-style: none; font-family: var(--font-mono); font-size: 0.8rem; }
+  .journal :global(li) {
+    display: grid;
+    gap: 0.25rem 1.25rem;
+    grid-template-columns: 1fr;
+    padding: 0.7rem 0;
+    border-bottom: 1px dashed color-mix(in oklab, var(--color-slate-700) 75%, transparent);
+  }
+  @media (width >= 44rem) {
+    .journal :global(li) { grid-template-columns: 7rem 9rem 1fr; align-items: baseline; }
+  }
+  .journal time { color: var(--color-ink-500); }
+  .journal__scope { color: var(--color-gold-400); }
+  .journal__msg { color: var(--color-ink-300); }
+
+  /* ---------- ENCART ---------- */
+  .encart {
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid color-mix(in oklab, var(--color-plasma-600) 40%, transparent);
+    background: color-mix(in oklab, var(--color-abyss) 88%, transparent);
+    overflow-x: auto;
+  }
+  .encart pre { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.9; }
+  .encart code { color: var(--color-plasma-300); }
+</style>
+
+<script>
+  function armTypewriter() {
+    const el = document.querySelector<HTMLElement>('[data-typewriter]');
+    if (!el) return;
+
+    const texte = el.dataset.typewriter ?? '';
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = texte;
+      return;
+    }
+
+    el.textContent = '';
+    let i = 0;
+    const tick = () => {
+      el.textContent = texte.slice(0, ++i);
+      if (i < texte.length) {
+        // Cadence irrégulière : une frappe parfaitement régulière sonne faux.
+        setTimeout(tick, 45 + Math.random() * 65);
+      }
+    };
+    setTimeout(tick, 450);
+  }
+
+  document.addEventListener('astro:page-load', armTypewriter);
+</script>

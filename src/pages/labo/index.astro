@@ -1,0 +1,220 @@
+---
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+
+/**
+ * Le Labo n'est pas une page de contenu : c'est un dispositif d'arbitrage.
+ * Trois directions artistiques poussées assez loin pour qu'on puisse les
+ * juger, sur le même fond et la même palette. On en garde une, on jette
+ * les deux autres — ou on prend un morceau de chacune.
+ */
+const pistes = [
+  {
+    slug: 'nebuleuse',
+    nom: 'Nébuleuse',
+    tension: 'Immersif',
+    resume:
+      'Pleine page, typographie monumentale, parallaxe assumée. Le contenu se mérite : on descend dedans comme dans un décor.',
+    pour: 'Impressionner en trois secondes, marquer les esprits.',
+    contre: 'Densité d’information faible. Fatigant sur une longue session.',
+    accent: 'nebula',
+  },
+  {
+    slug: 'orfevrerie',
+    nom: 'Orfèvrerie',
+    tension: 'Marchand haut de gamme',
+    resume:
+      'Grille stricte, filets d’or, cartes produit calibrées. La rigueur d’une boutique de joaillerie appliquée à des logiciels.',
+    pour: 'Crédibilité immédiate, comparaison facile entre produits.',
+    contre: 'Moins spectaculaire. Demande de belles images pour respirer.',
+    accent: 'gold',
+  },
+  {
+    slug: 'terminal',
+    nom: 'Terminal',
+    tension: 'Technique assumé',
+    resume:
+      'Monospace, grille apparente, densité maximale. Le site parle à des gens qui lisent des logs sans se plaindre.',
+    pour: 'Parle directement à un public technique. Très dense.',
+    contre: 'Écarte le lecteur non technique. Risque de froideur.',
+    accent: 'plasma',
+  },
+];
+---
+
+<Base
+  title="Labo"
+  description="Trois directions artistiques poussées jusqu’au rendu, pour choisir l’identité du site."
+  intensity={0.7}
+>
+  <header class="shell head">
+    <Reveal><p class="eyebrow">Placeholder · exploration</p></Reveal>
+    <Reveal delay={100}>
+      <h1>Le <em class="gilded">Labo</em></h1>
+    </Reveal>
+    <Reveal delay={200}>
+      <p class="head__lead">
+        Trois pistes de design construites sur la même palette et le même fond,
+        pour pouvoir trancher sur pièces plutôt que sur des adjectifs. Elles ne
+        sont pas destinées à rester en ligne : c’est un outil de décision.
+      </p>
+    </Reveal>
+    <Reveal delay={280}>
+      <p class="head__warn">
+        <span aria-hidden="true">⚠</span>
+        Pages de démonstration. Le contenu y est factice et la navigation
+        volontairement incomplète.
+      </p>
+    </Reveal>
+  </header>
+
+  <section class="shell pistes">
+    {
+      pistes.map((p, i) => (
+        <Reveal delay={i * 130} class="piste hairline" data-accent={p.accent}>
+          <a href={`/labo/${p.slug}`} class="piste__link">
+            <div class="piste__preview" aria-hidden="true" data-piste={p.slug}>
+              <span class="piste__preview-a"></span>
+              <span class="piste__preview-b"></span>
+              <span class="piste__preview-c"></span>
+            </div>
+
+            <div class="piste__body">
+              <p class="piste__tension">{p.tension}</p>
+              <h2>{p.nom}</h2>
+              <p class="piste__resume">{p.resume}</p>
+
+              <dl class="piste__balance">
+                <div><dt>Pour</dt><dd>{p.pour}</dd></div>
+                <div><dt>Contre</dt><dd>{p.contre}</dd></div>
+              </dl>
+
+              <span class="piste__cta">Ouvrir la piste →</span>
+            </div>
+          </a>
+        </Reveal>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding-block: clamp(4rem, 10vw, 8rem) 3rem;
+  }
+  .head h1 { font-size: var(--step-4); }
+  .head h1 em { font-style: italic; }
+  .head__lead { max-width: 54ch; font-size: var(--step-1); color: var(--color-ink-500); }
+  .head__warn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    color: var(--color-ember-300);
+    background: color-mix(in oklab, var(--color-ember-900) 40%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-ember-500) 30%, transparent);
+  }
+
+  .pistes { display: grid; gap: 1.25rem; padding-bottom: 5rem; }
+
+  .piste {
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--color-hull) 62%, transparent),
+      color-mix(in oklab, var(--color-abyss) 85%, transparent)
+    );
+    transition: border-color 0.5s var(--ease-cosmic), transform 0.5s var(--ease-cosmic);
+  }
+  .piste:hover { transform: translateY(-3px); border-color: color-mix(in oklab, var(--accent) 45%, transparent); }
+  .piste[data-accent='gold'] { --accent: var(--color-gold-500); }
+  .piste[data-accent='nebula'] { --accent: var(--color-nebula-500); }
+  .piste[data-accent='plasma'] { --accent: var(--color-plasma-400); }
+
+  .piste__link {
+    display: grid;
+    gap: 0;
+    grid-template-columns: 1fr;
+    color: inherit;
+  }
+  @media (width >= 56rem) { .piste__link { grid-template-columns: 20rem 1fr; } }
+
+  /* Miniature abstraite : trois blocs qui suggèrent la mise en page de la
+     piste sans avoir à produire une capture d'écran qui vieillirait. */
+  .piste__preview {
+    position: relative;
+    min-height: 12rem;
+    padding: 1.5rem;
+    display: grid;
+    gap: 0.5rem;
+    align-content: center;
+    background:
+      radial-gradient(80% 80% at 30% 20%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%),
+      color-mix(in oklab, var(--color-void) 60%, transparent);
+    border-right: 1px solid color-mix(in oklab, var(--color-slate-700) 60%, transparent);
+  }
+  .piste__preview span { display: block; border-radius: 4px; background: color-mix(in oklab, var(--accent) 40%, transparent); }
+
+  /* Nébuleuse : un bloc dominant, très grand. */
+  [data-piste='nebuleuse'] .piste__preview-a { height: 3.5rem; width: 90%; }
+  [data-piste='nebuleuse'] .piste__preview-b { height: 0.5rem; width: 55%; opacity: 0.5; }
+  [data-piste='nebuleuse'] .piste__preview-c { height: 0.5rem; width: 35%; opacity: 0.3; }
+
+  /* Orfèvrerie : grille régulière. */
+  [data-piste='orfevrerie'] .piste__preview { grid-template-columns: repeat(3, 1fr); align-content: center; }
+  [data-piste='orfevrerie'] .piste__preview span { height: 4rem; }
+  [data-piste='orfevrerie'] .piste__preview-b { opacity: 0.7; }
+  [data-piste='orfevrerie'] .piste__preview-c { opacity: 0.45; }
+
+  /* Terminal : lignes fines, denses. */
+  [data-piste='terminal'] .piste__preview { gap: 0.32rem; }
+  [data-piste='terminal'] .piste__preview span { height: 0.4rem; border-radius: 1px; }
+  [data-piste='terminal'] .piste__preview-a { width: 78%; }
+  [data-piste='terminal'] .piste__preview-b { width: 92%; opacity: 0.6; }
+  [data-piste='terminal'] .piste__preview-c { width: 64%; opacity: 0.35; }
+
+  .piste__body { padding: 2rem; display: flex; flex-direction: column; gap: 0.85rem; }
+  .piste__tension {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .piste__body h2 { font-size: var(--step-2); }
+  .piste__resume { color: var(--color-ink-300); max-width: 60ch; }
+
+  .piste__balance {
+    display: grid;
+    gap: 1rem 2rem;
+    margin-top: 0.4rem;
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-slate-700) 60%, transparent);
+  }
+  @media (width >= 40rem) { .piste__balance { grid-template-columns: repeat(2, 1fr); } }
+  .piste__balance dt {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    margin-bottom: 0.3rem;
+  }
+  .piste__balance dd { font-size: 0.88rem; color: var(--color-ink-300); }
+
+  .piste__cta {
+    margin-top: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+</style>

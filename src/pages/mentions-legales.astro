@@ -1,0 +1,87 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../consts';
+
+/**
+ * ⚠️ À COMPLÉTER AVANT MISE EN LIGNE
+ * En France, un site accessible au public doit identifier son éditeur et son
+ * hébergeur (LCEN, art. 6-III). Les champs entre crochets sont obligatoires.
+ */
+---
+
+<Base
+  title="Mentions légales"
+  description="Éditeur, hébergeur et informations légales du site."
+  intensity={0.3}
+>
+  <article class="shell legal">
+    <h1>Mentions légales</h1>
+
+    <div class="legal__warn">
+      <strong>À compléter.</strong> Les champs entre crochets doivent être
+      renseignés avant la mise en ligne publique du site.
+    </div>
+
+    <div class="prose">
+      <h2>Éditeur du site</h2>
+      <p>
+        {SITE.name}<br />
+        [Statut : particulier / auto-entrepreneur / société]<br />
+        [Adresse postale]<br />
+        [Numéro SIRET, si activité professionnelle]<br />
+        Contact : <a href="mailto:hugo.eymann@gmail.com">hugo.eymann@gmail.com</a>
+      </p>
+
+      <h2>Directeur de la publication</h2>
+      <p>{SITE.name}</p>
+
+      <h2>Hébergement</h2>
+      <p>
+        Cloudflare, Inc.<br />
+        101 Townsend St, San Francisco, CA 94107, États-Unis<br />
+        <a href="https://www.cloudflare.com" target="_blank" rel="noopener">cloudflare.com</a>
+      </p>
+
+      <h2>Propriété intellectuelle</h2>
+      <p>
+        L’ensemble des contenus de ce site (textes, illustrations, code des
+        exemples) est la propriété de {SITE.name}, sauf mention contraire.
+        Toute reproduction intégrale ou partielle sans autorisation préalable
+        est interdite.
+      </p>
+
+      <h2>Données personnelles</h2>
+      <p>
+        Ce site ne dépose aucun cookie et ne collecte aucune donnée personnelle
+        à des fins de suivi publicitaire. Aucun formulaire n’enregistre de
+        données : les prises de contact se font par courrier électronique
+        direct.
+      </p>
+      <p>
+        [Si une mesure d’audience est ajoutée par la suite — par exemple
+        Cloudflare Web Analytics, qui fonctionne sans cookie — le préciser ici.]
+      </p>
+
+      <h2>Liens externes</h2>
+      <p>
+        Ce site contient des liens vers des sites tiers. Leur contenu n’engage
+        que leurs éditeurs respectifs.
+      </p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .legal { max-width: 48rem; padding-block: clamp(4rem, 9vw, 7rem) 5rem; }
+  .legal h1 { font-size: var(--step-4); margin-bottom: 2rem; }
+  .legal__warn {
+    padding: 1rem 1.25rem;
+    margin-bottom: 2.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: var(--color-ember-300);
+    background: color-mix(in oklab, var(--color-ember-900) 35%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-ember-500) 32%, transparent);
+  }
+  .legal__warn strong { color: var(--color-ember-300); }
+</style>

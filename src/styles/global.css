@@ -1,0 +1,502 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   TOKENS — Tailwind v4 est « CSS-first » : ce bloc @theme EST la configuration.
+   Chaque variable déclarée ici génère automatiquement les utilitaires
+   correspondants (bg-gold-500, text-plasma-400, ease-cosmic, ...).
+   Il n'y a pas de tailwind.config.js : une seule source de vérité.
+   ========================================================================= */
+@theme {
+  /* --- Le vide. Quatre profondeurs de noir, jamais du #000 pur : un noir
+         légèrement bleuté garde de l'air et fait vibrer l'or par-dessus. --- */
+  --color-void: #04060d;
+  --color-abyss: #080d18;
+  --color-deep: #0d1524;
+  --color-hull: #141d2e;
+
+  /* --- La coque du vaisseau : olive-ardoise tiré des parois de la référence.
+         Sert aux surfaces, jamais au texte. --- */
+  --color-slate-900: #1a1f1c;
+  --color-slate-700: #2e352c;
+  --color-slate-500: #454d3f;
+  --color-slate-300: #6a7360;
+
+  /* --- L'OR. Couleur maîtresse : c'est la source de lumière du site.
+         Tout le reste s'organise autour de son rayonnement. --- */
+  --color-gold-50: #fdf7e4;
+  --color-gold-100: #fbeec2;
+  --color-gold-200: #f7e6b8;
+  --color-gold-300: #f3d98c;
+  --color-gold-400: #edc665;
+  --color-gold-500: #e0ad3c;
+  --color-gold-600: #c08c25;
+  --color-gold-700: #94661a;
+  --color-gold-800: #684614;
+  --color-gold-900: #3e290d;
+
+  /* --- Braise : l'horizon orangé de la référence. Chaleur, urgence,
+         accents d'appel à l'action secondaires. --- */
+  --color-ember-300: #ffb877;
+  --color-ember-500: #f0803a;
+  --color-ember-700: #b8481a;
+  --color-ember-900: #6b2410;
+
+  /* --- Plasma : le cyan des hologrammes. Contrepoint froid indispensable —
+         sans lui, l'or vire au jaune sale. --- */
+  --color-plasma-300: #9df0fb;
+  --color-plasma-400: #5fd9ee;
+  --color-plasma-600: #26a2bf;
+  --color-plasma-800: #14536b;
+
+  /* --- Nébuleuse : le violet cosmique. Uniquement en fond et en lueur. --- */
+  --color-nebula-300: #c3a4f5;
+  --color-nebula-500: #8b5fd6;
+  --color-nebula-700: #56349b;
+  --color-nebula-900: #2a1a54;
+
+  /* --- Astral : le bleu profond des nuits stellaires. --- */
+  --color-astral-400: #6b9bef;
+  --color-astral-600: #3a63c4;
+  --color-astral-800: #1d2f6b;
+
+  /* --- Sang : rouge rare, réservé aux signaux (erreur, "beta", "danger"). --- */
+  --color-blood-500: #d8412f;
+  --color-blood-700: #8f2318;
+
+  /* --- Encres : trois niveaux de texte, calibrés pour rester lisibles sur
+         --color-abyss (contraste AA minimum, AAA sur le niveau 1). --- */
+  --color-ink-100: #f4f1e8;
+  --color-ink-300: #c8c4b8;
+  --color-ink-500: #8e8b81;
+
+  /* --- Typographie --- */
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  /* --- Courbes. `cosmic` est la seule courbe pour les entrées : décélération
+         très longue, sensation de masse qui se pose. --- */
+  --ease-cosmic: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-gravity: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* --- Animations --- */
+  --animate-drift: drift 34s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 5s ease-in-out infinite;
+  --animate-sweep: sweep 1.1s var(--ease-cosmic);
+  --animate-twinkle: twinkle 4s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(2%, -3%, 0) scale(1.08); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+@keyframes sweep {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to   { transform: translateX(320%) skewX(-18deg); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================= */
+@layer base {
+  :root {
+    color-scheme: dark;
+    /* Échelle typographique fluide : aucune media query pour le corps de texte.
+       clamp(min, préféré-en-vw, max) — le texte respire avec le viewport. */
+    --step--1: clamp(0.8rem, 0.76rem + 0.2vw, 0.9rem);
+    --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+    --step-2: clamp(1.6rem, 1.4rem + 1vw, 2.15rem);
+    --step-3: clamp(2.1rem, 1.7rem + 2vw, 3.2rem);
+    --step-4: clamp(2.8rem, 2rem + 4vw, 5rem);
+    --step-5: clamp(3.4rem, 2.2rem + 6vw, 7rem);
+
+    /* Gouttière unique : toutes les marges latérales en dépendent. */
+    --gutter: clamp(1.25rem, 5vw, 4rem);
+    --shell: 78rem;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-ink-300);
+    font-family: var(--font-sans);
+    font-size: var(--step-0);
+    line-height: 1.7;
+    font-feature-settings: "cv02", "cv03", "cv11";
+    /* Le fond ne défile pas avec le contenu : la nébuleuse reste fixe pendant
+       que les sections glissent devant — c'est ce qui crée la profondeur. */
+    overflow-x: clip;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--color-ink-100);
+    text-wrap: balance;
+  }
+
+  p, li { text-wrap: pretty; }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-gold-500) 40%, transparent);
+    color: var(--color-gold-50);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* La barre de défilement fait partie du décor, pas une verrue système. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--color-void); }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--color-gold-800), var(--color-slate-700));
+    border-radius: 99px;
+    border: 2px solid var(--color-void);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-gold-600); }
+
+  /* --- Accessibilité : tout ce site est décoratif au-delà du texte.
+         Si l'utilisateur demande moins de mouvement, on le lui donne
+         vraiment — y compris le canvas WebGL, qui écoute la même requête. --- */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ============================================================================
+   COMPOSANTS — primitives visuelles réutilisées partout.
+   ========================================================================= */
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Texte doré. Un dégradé, pas une couleur plate : l'or n'existe que par
+     son gradient — une couleur unie donne du jaune moutarde. */
+  .gilded {
+    background: linear-gradient(
+      168deg,
+      var(--color-gold-100) 0%,
+      var(--color-gold-400) 34%,
+      var(--color-gold-700) 62%,
+      var(--color-gold-300) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Filet lumineux : bordure 1px qui simule une arête captant la lumière
+     par le haut et se perdant dans l'ombre en bas. */
+  .hairline {
+    position: relative;
+    border: 1px solid color-mix(in oklab, var(--color-gold-500) 16%, transparent);
+  }
+  .hairline::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-gold-300) 55%, transparent),
+      transparent 40%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Panneau de verre. Le `backdrop-blur` seul fait plastique : ce qui vend
+     l'effet, c'est le liseré clair en haut + l'ombre portée large et douce. */
+  .panel {
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--color-hull) 82%, transparent),
+      color-mix(in oklab, var(--color-abyss) 88%, transparent)
+    );
+    backdrop-filter: blur(14px) saturate(130%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--color-gold-200) 12%, transparent),
+      0 24px 60px -20px rgb(0 0 0 / 0.75);
+  }
+
+  /* Halo. Utilisé en pseudo-élément derrière les titres et les cartes.
+     `filter: blur()` sur un dégradé radial coûte moins cher qu'un box-shadow
+     de 200px et reste net au zoom. */
+  .aura {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Bouton principal — le lingot. Reflet spéculaire qui balaie au survol. */
+  .btn-gold {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1.75rem;
+    border-radius: 999px;
+    overflow: hidden;
+    isolation: isolate;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--color-gold-900);
+    background: linear-gradient(
+      160deg,
+      var(--color-gold-100),
+      var(--color-gold-400) 45%,
+      var(--color-gold-600)
+    );
+    box-shadow:
+      0 1px 0 color-mix(in oklab, var(--color-gold-50) 70%, transparent) inset,
+      0 12px 32px -12px color-mix(in oklab, var(--color-gold-500) 70%, transparent);
+    transition: transform 0.4s var(--ease-cosmic), box-shadow 0.4s var(--ease-cosmic);
+  }
+  .btn-gold::after {
+    content: "";
+    position: absolute;
+    inset-block: -50%;
+    left: 0;
+    width: 35%;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+    transform: translateX(-160%) skewX(-18deg);
+    z-index: -1;
+  }
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 color-mix(in oklab, var(--color-gold-50) 70%, transparent) inset,
+      0 20px 44px -12px color-mix(in oklab, var(--color-gold-500) 85%, transparent);
+  }
+  .btn-gold:hover::after { animation: var(--animate-sweep); }
+
+  /* Bouton secondaire — le verre gravé. */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1.75rem;
+    border-radius: 999px;
+    color: var(--color-ink-100);
+    border: 1px solid color-mix(in oklab, var(--color-gold-400) 28%, transparent);
+    background: color-mix(in oklab, var(--color-gold-900) 18%, transparent);
+    backdrop-filter: blur(8px);
+    transition: all 0.35s var(--ease-cosmic);
+  }
+  .btn-ghost:hover {
+    border-color: color-mix(in oklab, var(--color-gold-400) 60%, transparent);
+    background: color-mix(in oklab, var(--color-gold-800) 30%, transparent);
+    transform: translateY(-2px);
+  }
+
+  /* Étiquette de section — petites capitales espacées, avec tiret lumineux. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-gold-400);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 2.25rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-gold-500));
+  }
+
+  /* Grain. Une texture pseudo-aléatoire à très faible opacité tue le
+     « banding » des dégradés sombres, qui est LE défaut visuel n°1 des
+     sites sombres. Coût : un SVG inline de 300 octets. */
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* ============================================================================
+   RÉVÉLATION AU DÉFILEMENT
+   Piloté par un IntersectionObserver qui pose [data-revealed]. On évite
+   `animation-timeline: view()` : le support Safari est encore trop récent
+   pour un site vitrine qui doit fonctionner partout.
+
+   ⚠️ Le masquage est conditionné à la classe `.js`, posée par un script inline
+   en <head>. Sans JavaScript — ou si le script casse — le contenu reste
+   VISIBLE. Un effet d'apparition qui rate doit dégrader vers « pas d'effet »,
+   jamais vers « page blanche ».
+   ========================================================================= */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s var(--ease-cosmic),
+    transform 0.9s var(--ease-cosmic);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.js [data-reveal][data-revealed] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] { opacity: 1; transform: none; }
+}
+
+/* ============================================================================
+   PROSE — mise en forme des tutoriels rendus depuis MDX.
+   Écrit à la main plutôt qu'avec @tailwindcss/typography : le plugin impose
+   ses propres couleurs et on passerait plus de temps à le désarmer.
+   ========================================================================= */
+.prose {
+  --measure: 68ch;
+  color: var(--color-ink-300);
+}
+.prose > * { max-width: var(--measure); }
+.prose > h2,
+.prose > h3 { scroll-margin-top: 7rem; }
+
+.prose h2 {
+  font-size: var(--step-2);
+  margin-block: 3.5rem 1.25rem;
+  color: var(--color-ink-100);
+}
+.prose h3 {
+  font-size: var(--step-1);
+  margin-block: 2.5rem 0.85rem;
+  color: var(--color-gold-100);
+}
+.prose p { margin-block: 1.25rem; }
+.prose a {
+  color: var(--color-gold-300);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent);
+  text-underline-offset: 4px;
+  transition: color 0.25s;
+}
+.prose a:hover { color: var(--color-gold-100); }
+.prose strong { color: var(--color-ink-100); font-weight: 600; }
+.prose ul, .prose ol { margin-block: 1.25rem; padding-left: 1.5rem; }
+.prose ul { list-style: none; }
+.prose ul > li { position: relative; padding-left: 1.25rem; margin-block: 0.5rem; }
+.prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.75em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-gold-500);
+  box-shadow: 0 0 8px var(--color-gold-500);
+}
+.prose ol { list-style: decimal; }
+.prose ol > li { margin-block: 0.5rem; padding-left: 0.35rem; }
+.prose ol > li::marker { color: var(--color-gold-400); font-family: var(--font-mono); }
+
+.prose blockquote {
+  margin-block: 2rem;
+  padding: 1rem 1.5rem;
+  border-left: 2px solid var(--color-gold-600);
+  background: color-mix(in oklab, var(--color-gold-900) 22%, transparent);
+  border-radius: 0 8px 8px 0;
+  color: var(--color-ink-100);
+  font-style: italic;
+}
+
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 0.15em 0.45em;
+  border-radius: 5px;
+  color: var(--color-gold-200);
+  background: color-mix(in oklab, var(--color-gold-900) 35%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-gold-600) 22%, transparent);
+}
+
+.prose pre {
+  max-width: min(100%, 84ch);
+  margin-block: 1.75rem;
+  padding: 1.25rem 1.4rem;
+  border-radius: 14px;
+  overflow-x: auto;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  background: var(--color-abyss) !important;
+  border: 1px solid color-mix(in oklab, var(--color-gold-500) 14%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 18px 40px -22px rgb(0 0 0 / 0.9);
+}
+
+.prose img,
+.prose video {
+  max-width: 100%;
+  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--color-gold-500) 18%, transparent);
+}
+
+.prose hr {
+  margin-block: 3rem;
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-700), transparent);
+}
+
+.prose table {
+  width: 100%;
+  max-width: 100%;
+  margin-block: 2rem;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.prose th, .prose td {
+  padding: 0.7rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-slate-500) 45%, transparent);
+}
+.prose th {
+  color: var(--color-gold-300);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}

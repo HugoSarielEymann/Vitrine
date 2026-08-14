@@ -1,0 +1,79 @@
+---
+title: Formuler une hypothèse réfutable
+summary: Comment poser une question de marché à laquelle les données peuvent répondre non — et pourquoi c’est la seule façon d’obtenir un résultat qui tienne.
+logiciel: stocksscience-analyzer
+level: intermédiaire
+duration: 9
+date: 2026-07-28
+tags: ['StocksScience', 'Méthode', 'Statistiques']
+---
+
+Une hypothèse de marché mal formulée a une propriété redoutable : elle est
+toujours confirmée. Ce tutoriel montre comment en écrire une qui accepte de
+perdre.
+
+## Le test du « non »
+
+Avant d'écrire du code, écrivez la phrase qui vous ferait abandonner
+l'hypothèse. Si vous n'arrivez pas à l'écrire, l'hypothèse n'est pas
+réfutable, et aucun volume de données ne la rendra vraie.
+
+| Formulation | Réfutable ? |
+| --- | --- |
+| « Le volume prédit les retournements » | Non — ni horizon, ni seuil, ni mesure |
+| « Un pic de volume à +3σ est suivi d'un retournement à 5 jours dans plus de 55 % des cas » | Oui |
+
+La seconde peut échouer. C'est exactement ce qu'on lui demande.
+
+## Déclarer avant de mesurer
+
+L'ordre compte. On fige l'horizon, le seuil et le critère de succès **avant**
+de regarder les données — sinon on ajuste inconsciemment jusqu'à trouver, et
+on mesure sa propre persévérance plutôt qu'un effet réel.
+
+```python
+from stocksscience import Hypothesis, Horizon
+
+h = Hypothesis(
+    name="volume-spike-reversal",
+    claim="Un pic de volume à +3σ précède un retournement à 5 séances",
+    horizon=Horizon(days=5),
+    success_rate_threshold=0.55,   # figé maintenant, pas après coup
+    minimum_events=200,            # sous ce seuil, on ne conclut rien
+)
+```
+
+Le champ `minimum_events` n'est pas décoratif. Un effet observé sur douze
+occurrences n'est pas un effet, c'est du bruit avec une bonne histoire.
+
+## Le groupe témoin
+
+On rejoue la même hypothèse sur les marchés crypto, dont la microstructure
+n'a rien à voir avec celle des actions :
+
+```python
+result_equities = h.run(universe="sp500")
+result_crypto   = h.run(universe="crypto-majors")
+```
+
+La lecture est simple :
+
+- L'effet apparaît **des deux côtés** → suspecter un artefact de méthode
+  (fuite de données, biais de survivance, mauvais alignement temporel).
+- L'effet n'apparaît **que d'un côté** → il est peut-être réel. On continue.
+- L'effet n'apparaît **nulle part** → on archive. Ce n'est pas un échec.
+
+## Archiver les résultats négatifs
+
+```python
+h.archive(result_equities, verdict="rejected")
+```
+
+Un résultat négatif archivé vous évite de reposer la même question dans
+six mois. C'est le seul type de résultat dont la valeur augmente avec le temps.
+
+## Ce que ce protocole ne donne pas
+
+Il ne donne pas de signal de trading. Il donne une chance raisonnable que ce
+que vous croyez avoir vu existe en dehors de votre échantillon. C'est beaucoup
+moins excitant, et infiniment plus solide.

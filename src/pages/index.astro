@@ -1,0 +1,460 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Portal from '../components/Portal';
+import Reveal from '../components/Reveal.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import SoftwareCard from '../components/SoftwareCard.astro';
+
+const logiciels = (await getCollection('logiciels'))
+  .sort((a, b) => a.data.order - b.data.order);
+const vedettes = logiciels.filter((l) => l.data.featured).slice(0, 3);
+
+const tutoriels = (await getCollection('tutoriels', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+const principes = [
+  {
+    n: '01',
+    titre: 'Un outil explique ce qu’il fait',
+    texte:
+      'Chaque logiciel présenté ici arrive avec son mode d’emploi. Un outil qu’on ne sait pas prendre en main n’existe pas vraiment.',
+  },
+  {
+    n: '02',
+    titre: 'Les contraintes sont des fonctionnalités',
+    texte:
+      'Un validateur qui refuse, un format qu’on n’expose pas, une hypothèse qu’on fige avant de mesurer : ce qu’un outil interdit compte autant que ce qu’il permet.',
+  },
+  {
+    n: '03',
+    titre: 'Ce qui est appris reste acquis',
+    texte:
+      'Les micropackages, les aléas de test, les résultats négatifs archivés : chaque projet doit laisser derrière lui quelque chose que le suivant n’aura pas à redécouvrir.',
+  },
+];
+
+const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+
+<Base>
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="hero__stage" aria-hidden="true">
+      <Portal client:visible />
+    </div>
+
+    <div class="shell hero__content">
+      <Reveal class="hero__kicker">
+        <p class="eyebrow">Vitrine · Logiciels &amp; tutoriels</p>
+      </Reveal>
+
+      <Reveal delay={120}>
+        <h1 class="hero__title">
+          Des logiciels<br />
+          <em class="gilded">taillés à la main</em><br />
+          et leur mode d’emploi.
+        </h1>
+      </Reveal>
+
+      <Reveal delay={240}>
+        <p class="hero__lead">
+          Outils d’analyse, générateurs de code, pipelines visuels. Chacun est né
+          d’un problème précis, chacun est documenté jusqu’au bout. Vous trouverez
+          ici ce qu’ils font, pourquoi ils sont faits ainsi, et comment vous en servir.
+        </p>
+      </Reveal>
+
+      <Reveal delay={360} class="hero__actions">
+        <a href="/logiciels" class="btn-gold">
+          Explorer les logiciels
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
+            <path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href="/tutoriels" class="btn-ghost">Lire les tutoriels</a>
+      </Reveal>
+
+      <Reveal delay={520} class="hero__meta">
+        <dl>
+          <div><dt>Logiciels</dt><dd>{logiciels.length}</dd></div>
+          <div><dt>Tutoriels</dt><dd>{tutoriels.length}</dd></div>
+          <div><dt>Depuis</dt><dd>2026</dd></div>
+        </dl>
+      </Reveal>
+    </div>
+
+    <div class="hero__cue" aria-hidden="true">
+      <span></span>
+    </div>
+  </section>
+
+  <!-- ================= PRINCIPES ================= -->
+  <section class="shell band">
+    <SectionHeader
+      eyebrow="Ce qui guide le travail"
+      title="Trois principes, tenus <em class='gilded'>sans exception</em>"
+      lead="Ils décident de ce qui entre dans un outil, et surtout de ce qui n’y entre pas."
+    />
+
+    <ol class="principes">
+      {
+        principes.map((p, i) => (
+          <Reveal as="li" delay={i * 120} class="principe hairline">
+            <span class="principe__n">{p.n}</span>
+            <h3>{p.titre}</h3>
+            <p>{p.texte}</p>
+          </Reveal>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- ================= LOGICIELS ================= -->
+  <section class="shell band" id="logiciels">
+    <div class="band__head">
+      <SectionHeader
+        eyebrow="Les logiciels"
+        title="Ce que je <em class='gilded'>construis</em>"
+        lead="Des outils que j’utilise moi-même tous les jours. C’est le seul filtre qualité qui ne ment pas."
+      />
+      <Reveal delay={200}>
+        <a href="/logiciels" class="band__link">Tout voir →</a>
+      </Reveal>
+    </div>
+
+    <div class="grid-cards">
+      {
+        vedettes.map((l, i) => (
+          <Reveal delay={i * 130}>
+            <SoftwareCard
+              title={l.data.title}
+              slug={l.id}
+              summary={l.data.summary}
+              status={l.data.status}
+              stack={l.data.stack}
+              glyph={l.data.glyph}
+              accent={l.data.accent}
+            />
+          </Reveal>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- ================= TUTORIELS ================= -->
+  <section class="shell band">
+    <div class="band__head">
+      <SectionHeader
+        eyebrow="Les tutoriels"
+        title="Comment s’en <em class='gilded'>servir</em>"
+        lead="Des guides écrits en suivant réellement les étapes, pas en les imaginant."
+      />
+      <Reveal delay={200}>
+        <a href="/tutoriels" class="band__link">Tout voir →</a>
+      </Reveal>
+    </div>
+
+    <ul class="tut-list">
+      {
+        tutoriels.map((t, i) => (
+          <Reveal as="li" delay={i * 110} class="tut hairline">
+            <a href={`/tutoriels/${t.id}`} class="tut__link">
+              <div class="tut__main">
+                <p class="tut__tags">
+                  <span class="tut__level" data-level={t.data.level}>{t.data.level}</span>
+                  <span class="tut__dot">·</span>
+                  <span>{t.data.duration} min</span>
+                </p>
+                <h3>{t.data.title}</h3>
+                <p class="tut__summary">{t.data.summary}</p>
+              </div>
+              <time datetime={t.data.date.toISOString()}>{dateFmt.format(t.data.date)}</time>
+            </a>
+          </Reveal>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section class="shell band" id="contact">
+    <Reveal class="contact hairline">
+      <div class="contact__aura aura" aria-hidden="true"></div>
+      <p class="eyebrow">Parlons-en</p>
+      <h2 class="contact__title">
+        Un projet, une question,<br />
+        ou juste <em class="gilded">de la curiosité</em> ?
+      </h2>
+      <p class="contact__lead">
+        Je réponds à tout ce qui est écrit par un humain. Les propositions de
+        référencement automatique, un peu moins.
+      </p>
+      <div class="contact__actions">
+        <a href="mailto:hugo.eymann@gmail.com" class="btn-gold">Écrire un message</a>
+        <a href="https://github.com/HugoSarielEymann" target="_blank" rel="noopener" class="btn-ghost">
+          Voir sur GitHub
+        </a>
+      </div>
+    </Reveal>
+  </section>
+</Base>
+
+<style>
+  /* ---------------- HERO ---------------- */
+  .hero {
+    position: relative;
+    min-height: min(100svh, 58rem);
+    display: flex;
+    align-items: center;
+    padding-block: 7rem 5rem;
+    overflow: hidden;
+  }
+
+  /* Le portail 3D occupe tout le hero et passe DERRIÈRE le texte. Sur mobile
+     il est décalé vers le haut pour ne pas se battre avec les boutons. */
+  .hero__stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.85;
+    mask-image: radial-gradient(closest-side at 62% 46%, #000 55%, transparent 100%);
+  }
+  @media (width < 62rem) {
+    .hero__stage {
+      inset: -12% 0 auto 0;
+      height: 62%;
+      opacity: 0.6;
+    }
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    align-items: flex-start;
+    max-width: min(100%, 62rem);
+  }
+
+  .hero__title {
+    font-size: var(--step-5);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    max-width: 16ch;
+    /* Ombre portée large : détache le titre du portail sans caisson opaque. */
+    text-shadow: 0 4px 60px rgb(0 0 0 / 0.85);
+  }
+  .hero__title em { font-style: italic; }
+
+  .hero__lead {
+    max-width: 48ch;
+    font-size: var(--step-1);
+    line-height: 1.6;
+    color: var(--color-ink-300);
+    text-shadow: 0 2px 24px rgb(0 0 0 / 0.9);
+  }
+
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.9rem; }
+
+  .hero__meta dl {
+    display: flex;
+    gap: 2.5rem;
+    margin-top: 1.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-gold-500) 18%, transparent);
+  }
+  .hero__meta dt {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .hero__meta dd {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    color: var(--color-gold-300);
+    line-height: 1.2;
+  }
+
+  /* Indice de défilement : une goutte de lumière qui descend en boucle. */
+  .hero__cue {
+    position: absolute;
+    left: 50%;
+    bottom: 2rem;
+    translate: -50% 0;
+    width: 1px;
+    height: 3.5rem;
+    background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--color-gold-400) 55%, transparent));
+    overflow: hidden;
+  }
+  .hero__cue span {
+    position: absolute;
+    inset-inline: -1px;
+    height: 40%;
+    background: var(--color-gold-200);
+    box-shadow: 0 0 10px var(--color-gold-300);
+    animation: cue 2.6s var(--ease-gravity) infinite;
+  }
+  @keyframes cue {
+    0% { top: -45%; opacity: 0; }
+    35% { opacity: 1; }
+    100% { top: 105%; opacity: 0; }
+  }
+
+  /* ---------------- BANDES ---------------- */
+  .band { padding-block: clamp(4rem, 9vw, 8rem); }
+
+  .band__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .band__link {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-gold-400);
+    white-space: nowrap;
+    transition: color 0.25s, translate 0.3s var(--ease-cosmic);
+  }
+  .band__link:hover { color: var(--color-gold-100); translate: 4px 0; }
+
+  /* ---------------- PRINCIPES ---------------- */
+  .principes {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 3rem;
+    list-style: none;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 52rem) { .principes { grid-template-columns: repeat(3, 1fr); } }
+
+  .principe {
+    position: relative;
+    padding: 2rem 1.75rem;
+    border-radius: 16px;
+    background: linear-gradient(
+      165deg,
+      color-mix(in oklab, var(--color-hull) 55%, transparent),
+      transparent 85%
+    );
+  }
+  .principe__n {
+    display: block;
+    margin-bottom: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    color: var(--color-gold-600);
+  }
+  .principe h3 { font-size: var(--step-1); margin-bottom: 0.65rem; }
+  .principe p { color: var(--color-ink-500); font-size: 0.94rem; }
+
+  /* ---------------- GRILLE DE CARTES ---------------- */
+  .grid-cards {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 46rem) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 68rem) { .grid-cards { grid-template-columns: repeat(3, 1fr); } }
+
+  /* ---------------- LISTE DE TUTORIELS ---------------- */
+  .tut-list { display: grid; gap: 0.9rem; list-style: none; }
+
+  .tut {
+    border-radius: 14px;
+    overflow: hidden;
+    background: color-mix(in oklab, var(--color-hull) 45%, transparent);
+    transition: background 0.4s var(--ease-cosmic), border-color 0.4s var(--ease-cosmic);
+  }
+  .tut:hover {
+    background: color-mix(in oklab, var(--color-hull) 78%, transparent);
+    border-color: color-mix(in oklab, var(--color-gold-500) 38%, transparent);
+  }
+
+  .tut__link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding: 1.5rem 1.75rem;
+    color: inherit;
+  }
+  .tut__main { flex: 1 1 24rem; }
+  .tut__tags {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .tut__level { color: var(--color-plasma-400); }
+  .tut__level[data-level='intermédiaire'] { color: var(--color-gold-400); }
+  .tut__level[data-level='avancé'] { color: var(--color-ember-300); }
+  .tut__dot { opacity: 0.5; }
+
+  .tut h3 {
+    font-size: var(--step-1);
+    margin-bottom: 0.45rem;
+    transition: color 0.3s;
+  }
+  .tut:hover h3 { color: var(--color-gold-100); }
+  .tut__summary { color: var(--color-ink-500); font-size: 0.92rem; max-width: 62ch; }
+
+  .tut__link time {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-ink-500);
+    white-space: nowrap;
+    padding-top: 0.2rem;
+  }
+
+  /* ---------------- CONTACT ---------------- */
+  .contact {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(2.5rem, 6vw, 5rem);
+    border-radius: 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    background: linear-gradient(
+      165deg,
+      color-mix(in oklab, var(--color-hull) 78%, transparent),
+      color-mix(in oklab, var(--color-abyss) 90%, transparent)
+    );
+  }
+  .contact__aura {
+    width: 34rem;
+    height: 34rem;
+    top: -60%;
+    left: 50%;
+    translate: -50% 0;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--color-gold-500) 40%, transparent),
+      transparent
+    );
+  }
+  .contact__title { font-size: var(--step-3); }
+  .contact__title em { font-style: italic; }
+  .contact__lead { max-width: 44ch; color: var(--color-ink-500); }
+  .contact__actions { display: flex; flex-wrap: wrap; gap: 0.9rem; justify-content: center; margin-top: 0.75rem; }
+</style>

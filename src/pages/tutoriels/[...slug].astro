@@ -1,0 +1,295 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Reveal from '../../components/Reveal.astro';
+
+export async function getStaticPaths() {
+  const tutoriels = await getCollection('tutoriels', ({ data }) => !data.draft);
+  return tutoriels.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+// On ne garde que les h2 : un sommaire à trois niveaux sur un tutoriel de
+// dix minutes est plus intimidant qu'utile.
+const toc = headings.filter((h) => h.depth === 2);
+
+const logiciel = entry.data.logiciel ? await getEntry('logiciels', entry.data.logiciel) : undefined;
+
+const dateFmt = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<Base title={entry.data.title} description={entry.data.summary} intensity={0.45}>
+  <!-- Barre de progression de lecture, collée sous la nav. -->
+  <div class="progress" aria-hidden="true"><span data-progress></span></div>
+
+  <article class="tuto">
+    <header class="shell tuto__head">
+      <Reveal>
+        <a href="/tutoriels" class="tuto__back">← Tous les tutoriels</a>
+      </Reveal>
+
+      <Reveal delay={80}>
+        <div class="tuto__meta">
+          <span class="tuto__level" data-level={entry.data.level}>{entry.data.level}</span>
+          <span>{entry.data.duration} min de lecture</span>
+          <time datetime={entry.data.date.toISOString()}>{dateFmt.format(entry.data.date)}</time>
+        </div>
+      </Reveal>
+
+      <Reveal delay={140}><h1>{entry.data.title}</h1></Reveal>
+      <Reveal delay={220}><p class="tuto__summary">{entry.data.summary}</p></Reveal>
+
+      {
+        logiciel && (
+          <Reveal delay={300}>
+            <a href={`/logiciels/${logiciel.id}`} class="tuto__soft hairline">
+              <span class="tuto__soft-glyph" aria-hidden="true">{logiciel.data.glyph}</span>
+              <span>
+                <small>Logiciel concerné</small>
+                <strong>{logiciel.data.title}</strong>
+              </span>
+            </a>
+          </Reveal>
+        )
+      }
+    </header>
+
+    <div class="shell tuto__body">
+      {
+        toc.length > 1 && (
+          <nav class="toc" aria-label="Sommaire">
+            <p class="toc__title">Sommaire</p>
+            <ol>
+              {toc.map((h) => (
+                <li>
+                  <a href={`#${h.slug}`} data-toc-link={h.slug}>{h.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+
+      <div class="prose tuto__prose">
+        <Content />
+      </div>
+    </div>
+
+    <footer class="shell tuto__foot">
+      <div class="tuto__foot-card hairline">
+        <p class="eyebrow">Une question ?</p>
+        <h2>Ce guide vous a laissé sur votre faim ?</h2>
+        <p>
+          Dites-moi précisément où ça a coincé — c’est comme ça que les tutoriels
+          s’améliorent.
+        </p>
+        <a href="mailto:hugo.eymann@gmail.com" class="btn-gold">Me signaler un point flou</a>
+      </div>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .progress {
+    position: sticky;
+    top: 4.75rem;
+    z-index: 40;
+    height: 2px;
+    background: color-mix(in oklab, var(--color-slate-700) 60%, transparent);
+  }
+  .progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--color-gold-600), var(--color-gold-200));
+    box-shadow: 0 0 10px color-mix(in oklab, var(--color-gold-400) 70%, transparent);
+  }
+
+  .tuto__head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.35rem;
+    padding-block: clamp(3rem, 7vw, 5.5rem) 3rem;
+  }
+
+  .tuto__back {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    transition: color 0.25s;
+  }
+  .tuto__back:hover { color: var(--color-gold-300); }
+
+  .tuto__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .tuto__level { color: var(--color-plasma-400); }
+  .tuto__level[data-level='intermédiaire'] { color: var(--color-gold-400); }
+  .tuto__level[data-level='avancé'] { color: var(--color-ember-300); }
+
+  .tuto__head h1 { font-size: var(--step-4); max-width: 20ch; }
+  .tuto__summary { max-width: 56ch; font-size: var(--step-1); color: var(--color-ink-300); }
+
+  .tuto__soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1.4rem 0.85rem 1.1rem;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--color-hull) 60%, transparent);
+    transition: border-color 0.35s, transform 0.35s var(--ease-cosmic);
+  }
+  .tuto__soft:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--color-gold-500) 45%, transparent); }
+  .tuto__soft-glyph { font-size: 1.6rem; color: var(--color-gold-400); }
+  .tuto__soft small {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .tuto__soft strong { color: var(--color-ink-100); font-weight: 500; }
+
+  .tuto__body {
+    display: grid;
+    gap: 3rem;
+    grid-template-columns: 1fr;
+    padding-bottom: 3rem;
+  }
+  @media (width >= 68rem) {
+    .tuto__body { grid-template-columns: 15rem minmax(0, 1fr); gap: 4rem; }
+  }
+
+  .toc { font-size: 0.88rem; }
+  @media (width >= 68rem) {
+    .toc { position: sticky; top: 7.5rem; align-self: start; max-height: 75vh; overflow-y: auto; }
+  }
+  .toc__title {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-gold-500);
+    margin-bottom: 0.9rem;
+  }
+  .toc ol { list-style: none; display: grid; gap: 0.1rem; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: block;
+    padding: 0.4rem 0 0.4rem 1.6rem;
+    position: relative;
+    color: var(--color-ink-500);
+    border-left: 1px solid color-mix(in oklab, var(--color-slate-500) 50%, transparent);
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    position: absolute;
+    left: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--color-slate-300);
+  }
+  .toc a:hover { color: var(--color-ink-100); }
+  /* Section active : mise en évidence pilotée par IntersectionObserver. */
+  .toc a[data-active] {
+    color: var(--color-gold-200);
+    border-left-color: var(--color-gold-500);
+  }
+  .toc a[data-active]::before { color: var(--color-gold-500); }
+
+  .tuto__foot { padding-block: 2rem 4rem; }
+  .tuto__foot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: clamp(2rem, 5vw, 3rem);
+    border-radius: 20px;
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--color-hull) 72%, transparent),
+      color-mix(in oklab, var(--color-abyss) 88%, transparent)
+    );
+  }
+  .tuto__foot-card h2 { font-size: var(--step-2); }
+  .tuto__foot-card p { max-width: 48ch; color: var(--color-ink-500); }
+</style>
+
+<script>
+  function armLecture() {
+    const bar = document.querySelector<HTMLElement>('[data-progress]');
+    const article = document.querySelector<HTMLElement>('.tuto__prose');
+
+    // --- Progression de lecture ---
+    if (bar && article) {
+      let ticking = false;
+      const update = () => {
+        ticking = false;
+        const start = article.offsetTop;
+        const span = article.offsetHeight - innerHeight * 0.4;
+        const p = span <= 0 ? 1 : (scrollY - start + innerHeight * 0.4) / span;
+        bar.style.width = `${Math.min(100, Math.max(0, p * 100))}%`;
+      };
+      const onScroll = () => {
+        // rAF plutôt qu'un throttle temporel : on écrit pile une fois par frame.
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      };
+      addEventListener('scroll', onScroll, { passive: true });
+      addEventListener('resize', onScroll, { passive: true });
+      update();
+
+      document.addEventListener('astro:before-swap', () => {
+        removeEventListener('scroll', onScroll);
+        removeEventListener('resize', onScroll);
+      }, { once: true });
+    }
+
+    // --- Section active dans le sommaire ---
+    const liens = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+    if (!liens.length) return;
+
+    const titres = Array.from(liens)
+      .map((a) => document.getElementById(a.dataset.tocLink!))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          liens.forEach((a) => a.toggleAttribute('data-active', a.dataset.tocLink === e.target.id));
+        }
+      },
+      // Fenêtre étroite en haut de l'écran : le titre « actif » est celui
+      // qui vient de passer sous la nav, pas celui qui est au milieu.
+      { rootMargin: '-15% 0px -75% 0px' },
+    );
+    titres.forEach((t) => io.observe(t));
+  }
+
+  document.addEventListener('astro:page-load', armLecture);
+</script>
