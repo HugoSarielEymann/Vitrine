@@ -1,0 +1,28 @@
+# Normalisation des fins de ligne.
+#
+# Sans ce fichier, Git avertit à chaque `git add` que les LF seront convertis
+# en CRLF sous Windows. Pire : le dépôt finit par mélanger les deux, ce qui
+# produit des diffs illisibles dès qu'une autre machine (ou le runner Linux de
+# Cloudflare) touche les mêmes fichiers.
+#
+# Règle : LF dans le dépôt, conversion locale laissée à `core.autocrlf`.
+* text=auto eol=lf
+
+# Fichiers dont les fins de ligne ne doivent jamais être touchées.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.mp4 binary
+*.webm binary
+
+# Le lockfile est généré : le sortir des diffs de revue.
+package-lock.json linguist-generated=true -diff
