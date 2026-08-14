@@ -10,8 +10,37 @@
  * avec une inertie forte — l'objet a de la masse, il ne « colle » pas au curseur.
  */
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useMemo, useRef, useState, Suspense } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import * as THREE from 'three';
+
+/**
+ * Position du pointeur suivie au niveau de la FENÊTRE.
+ *
+ * Le `pointer` fourni par React Three Fiber provient des événements reçus par
+ * le canvas. Or le texte du hero est empilé au-dessus : dès que le curseur
+ * passe dessus, le canvas ne reçoit plus rien et la visée se fige là où elle
+ * était. Comme le portail est purement décoratif et doit suivre le curseur
+ * partout, on écoute la fenêtre — le seul élément que rien ne masque.
+ *
+ * Convention conservée : x et y dans [-1, 1], y positif vers le HAUT, comme
+ * chez R3F, pour que le reste du calcul soit inchangé.
+ */
+function useWindowPointer() {
+  const pointer = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    // `pointermove` couvre souris ET stylet ; sur tactile il n'y a pas de
+    // survol, le portail garde alors sa respiration autonome.
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => window.removeEventListener('pointermove', onMove);
+  }, []);
+
+  return pointer;
+}
 
 /* -------------------------------------------------------------------------
    Disque de plasma — shader maison.
@@ -327,10 +356,11 @@ function Scene() {
   const group = useRef<THREE.Group>(null);
   const { viewport } = useThree();
   const target = useRef({ x: 0, y: 0 });
+  const pointer = useWindowPointer();
 
-  useFrame(({ pointer }) => {
-    target.current.x += (pointer.y * 0.18 - target.current.x) * 0.03;
-    target.current.y += (pointer.x * 0.28 - target.current.y) * 0.03;
+  useFrame(() => {
+    target.current.x += (pointer.current.y * 0.18 - target.current.x) * 0.03;
+    target.current.y += (pointer.current.x * 0.28 - target.current.y) * 0.03;
     if (group.current) {
       group.current.rotation.x = target.current.x;
       group.current.rotation.y = target.current.y;
