@@ -95,8 +95,11 @@ puis relancer le `git push -u origin main`.
 > `NPM_VERSION` à jour — et vérifier avec `npm ci` avant de pousser.
 >
 > *Repli si le problème réapparaît :* remplacer la build command par
-> `npm install && npm run build`. `npm install` tolère l'écart au lieu de le
-> refuser, au prix de builds qui ne sont plus strictement reproductibles.
+> `npm install --engine-strict=false && npm run build`. `npm install` tolère
+> l'écart de résolution au lieu de le refuser, et le drapeau désarme le
+> garde-fou du `.npmrc` — sans lui, npm 10 s'arrêterait sur `EBADENGINE`
+> avant même d'installer quoi que ce soit. À utiliser en dépannage
+> seulement : les builds ne sont alors plus strictement reproductibles.
 
 5. **Save and Deploy.** Le premier build prend une à deux minutes.
 
