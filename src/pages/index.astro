@@ -217,14 +217,20 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
     display: flex;
     align-items: center;
     padding-block: 7rem 5rem;
-    overflow: hidden;
+    /* Pas d'`overflow: hidden` ici : il découpait net les anneaux et les
+       étincelles à la limite de la section. Le débordement horizontal est
+       déjà neutralisé par `overflow-x: clip` sur body. */
   }
 
   /* Le portail 3D occupe tout le hero et passe DERRIÈRE le texte. Sur mobile
      il est décalé vers le haut pour ne pas se battre avec les boutons. */
   .hero__stage {
     position: absolute;
-    inset: 0;
+    /* La scène déborde volontairement du hero. Le canvas a beau être masqué
+       en douceur, il reste un rectangle : tout ce qui touche son bord est
+       coupé net. En l'agrandissant, la coupure tombe hors champ et seul le
+       fondu du masque est visible. */
+    inset: -11% -5%;
     z-index: 0;
     opacity: 0.92;
     /* Le masque sert à fondre les bords du canvas dans le fond, PAS à recadrer
@@ -232,7 +238,10 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
        du hero, soit bien moins que le portail lui-même : les anneaux étaient
        rognés et le tourbillon éteint. Ellipse explicite, généreuse, dont seule
        la périphérie s'estompe. */
-    mask-image: radial-gradient(46% 88% at 64% 47%, #000 62%, transparent 100%);
+    /* Le masque doit s'éteindre AVANT le bord du canvas, sinon il ne masque
+       plus rien à cet endroit et la coupure réapparaît. D'où des rayons
+       (42% / 78%) volontairement inférieurs à la demi-dimension. */
+    mask-image: radial-gradient(42% 78% at 62% 47%, #000 56%, transparent 100%);
   }
   @media (width < 62rem) {
     .hero__stage {
@@ -247,23 +256,33 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    /* Desktop : le texte est à gauche, le portail à droite. */
-    background: linear-gradient(
-      100deg,
-      var(--color-void) 4%,
-      color-mix(in oklab, var(--color-void) 82%, transparent) 34%,
-      color-mix(in oklab, var(--color-void) 35%, transparent) 54%,
-      transparent 68%
+    /* Deux règles apprises à la dure sur ce voile :
+       1. NOIR PUR, jamais --color-void. Une couleur « presque noire » reste
+          une couleur : étalée sur toute la zone, elle teinte tout ce qu'elle
+          couvre — ici en bleu — et le hero cesse d'appartenir au même site.
+          Du noir à alpha variable assombrit sans jamais décaler la teinte.
+       2. Une ELLIPSE qui s'éteint dans toutes les directions, pas un dégradé
+          linéaire. Un linéaire garde sa pleine opacité jusqu'au bord du
+          conteneur et dessine une arête horizontale nette au bas du hero. */
+    background: radial-gradient(
+      105% 88% at 16% 46%,
+      rgb(0 0 0 / 0.84) 0%,
+      rgb(0 0 0 / 0.52) 40%,
+      rgb(0 0 0 / 0) 72%
     );
   }
   @media (width < 62rem) {
-    /* Mobile : le portail passe au-dessus du texte, le voile devient vertical. */
+    /* Mobile : le portail est en haut, le texte dessous. Le voile redevient
+       vertical, mais se rouvre sur les derniers pourcents pour rejoindre la
+       section suivante sans marche. */
     .hero__scrim {
       background: linear-gradient(
         to bottom,
-        transparent 0%,
-        color-mix(in oklab, var(--color-void) 55%, transparent) 32%,
-        var(--color-void) 62%
+        rgb(0 0 0 / 0) 0%,
+        rgb(0 0 0 / 0.5) 26%,
+        rgb(0 0 0 / 0.8) 52%,
+        rgb(0 0 0 / 0.8) 86%,
+        rgb(0 0 0 / 0) 100%
       );
     }
   }

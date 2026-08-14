@@ -180,7 +180,7 @@ const SPARK_FRAG = /* glsl */ `
 const R_BIRTH = 0.12; // rayon d'apparition, au cœur du tourbillon
 const R_DEATH = 4.6; // rayon d'extinction
 
-function Sparks({ count = 900 }: { count?: number }) {
+function Sparks({ count = 620 }: { count?: number }) {
   const points = useRef<THREE.Points>(null);
 
   // État par particule, hors du buffer GPU : angle, rayon, vitesse, dérive.
@@ -198,9 +198,9 @@ function Sparks({ count = 900 }: { count?: number }) {
       // Rayons initiaux étalés sur tout le trajet : sinon toutes les
       // particules partiraient ensemble et on verrait une onde de choc.
       radius[i] = R_BIRTH + Math.random() * (R_DEATH - R_BIRTH);
-      speed[i] = 0.35 + Math.random() * 0.7;
-      spin[i] = 0.5 + Math.random() * 1.1;
-      vz[i] = 0.12 + Math.random() * 0.5;
+      speed[i] = 0.15 + Math.random() * 0.3;
+      spin[i] = 0.26 + Math.random() * 0.58;
+      vz[i] = 0.05 + Math.random() * 0.2;
       z[i] = (Math.random() - 0.5) * 0.3;
       size[i] = 0.6 + Math.random() * 1.7;
     }
@@ -243,7 +243,7 @@ function Sparks({ count = 900 }: { count?: number }) {
 
     for (let i = 0; i < count; i++) {
       // Accélération radiale : lent près du cœur, projeté ensuite.
-      radius[i] += speed[i] * dt * (0.35 + radius[i] * 0.55);
+      radius[i] += speed[i] * dt * (0.3 + radius[i] * 0.4);
       // Rotation en 1/r : la particule est happée par le tourbillon au centre
       // et se redresse en s'éloignant. C'est ce gradient qui donne la spirale.
       angle[i] += (spin[i] * dt * 1.6) / (0.45 + radius[i]);
@@ -253,8 +253,8 @@ function Sparks({ count = 900 }: { count?: number }) {
         radius[i] = R_BIRTH + Math.random() * 0.1;
         angle[i] = Math.random() * Math.PI * 2;
         z[i] = (Math.random() - 0.5) * 0.15;
-        speed[i] = 0.35 + Math.random() * 0.7;
-        vz[i] = 0.12 + Math.random() * 0.5;
+        speed[i] = 0.15 + Math.random() * 0.3;
+        vz[i] = 0.05 + Math.random() * 0.2;
       }
 
       const r = radius[i];
@@ -341,7 +341,9 @@ function Scene() {
   });
 
   // Sur mobile, la scène doit rétrécir sinon les anneaux sortent du cadre.
-  const scale = Math.min(1, viewport.width / 7);
+  // Le facteur 0.78 compense l'agrandissement du conteneur : le canvas déborde
+  // du hero pour ne rien couper, mais l'objet doit garder sa taille à l'écran.
+  const scale = Math.min(1, viewport.width / 7) * 0.78;
 
   return (
     <group ref={group} scale={scale}>
