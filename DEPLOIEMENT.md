@@ -61,47 +61,67 @@ puis relancer le `git push -u origin main`.
 | Build output directory | `dist` |
 | Root directory | *(laisser vide)* |
 
-4. **Variables d'environnement** — onglet *Settings → Environment variables* :
+Aucune variable d'environnement n'est nécessaire. Cloudflare fournit déjà
+Node 24 ; `NODE_VERSION` est facultatif.
 
-| Variable | Valeur | Pourquoi |
-| --- | --- | --- |
-| `NPM_VERSION` | `11.6.2` | **Obligatoire.** Voir l'encadré ci-dessous. |
-| `NODE_VERSION` | `24` | Facultatif : Cloudflare fournit déjà Node 24. |
+4. **Save and Deploy.** Le premier build prend une à deux minutes.
 
-> ### Pourquoi `NPM_VERSION` est obligatoire
->
-> Cloudflare installe les dépendances avec `npm ci`, qui exige que
-> `package-lock.json` soit **exactement** synchronisé avec `package.json`.
-> Or npm 10 et npm 11 ne résolvent pas identiquement les sous-arbres
-> optionnels propres à une plateforme : le moteur Markdown `satteri` embarque
-> un repli `wasm32-wasi` que npm n'installe pas sous Windows, et dont la
-> dépendance `@emnapi/*` se résout en `1.11.1` sous npm 11, `1.11.3` sous npm 10.
->
-> Sans cette variable, le build échoue sur :
->
-> ```
-> npm error `npm ci` can only install packages when your package.json
-> npm error and package-lock.json ... are in sync.
-> npm error Missing: @emnapi/runtime@1.11.3 from lock file
-> ```
->
-> Le lockfile n'est pas corrompu : il est valide, mais **pour npm 11**.
-> Le champ `engines` de `package.json` et le `engine-strict=true` du `.npmrc`
-> transforment désormais cet échec opaque en un message clair
-> (« Unsupported engine ») si la variable venait à manquer.
->
-> **Règle générale :** la version de npm en CI doit suivre celle de la machine
-> qui écrit le lockfile. Après une montée de npm en local, mettre
-> `NPM_VERSION` à jour — et vérifier avec `npm ci` avant de pousser.
->
-> *Repli si le problème réapparaît :* remplacer la build command par
-> `npm install --engine-strict=false && npm run build`. `npm install` tolère
-> l'écart de résolution au lieu de le refuser, et le drapeau désarme le
-> garde-fou du `.npmrc` — sans lui, npm 10 s'arrêterait sur `EBADENGINE`
-> avant même d'installer quoi que ce soit. À utiliser en dépannage
-> seulement : les builds ne sont alors plus strictement reproductibles.
+---
 
-5. **Save and Deploy.** Le premier build prend une à deux minutes.
+## ⚠️ Le lockfile doit rester compatible npm 10
+
+C'est la seule contrainte non évidente du projet. La lire une fois évite un
+build cassé plus tard.
+
+### Le problème
+
+Cloudflare installe avec `npm ci`, qui exige que `package-lock.json` soit
+**exactement** synchronisé avec `package.json`. Or l'image de build Cloudflare
+utilise **npm 10.9.2**, alors que la machine de développement tourne sous
+**npm 11.6.2** — et les deux ne résolvent pas identiquement les sous-arbres
+optionnels propres à une plateforme.
+
+En pratique : le moteur Markdown `satteri` embarque un repli `wasm32-wasi` que
+npm n'installe pas sous Windows. Sa dépendance `@emnapi/*` se résout en
+`1.11.1` sous npm 11, mais npm 10 réclame en plus `1.11.3`. D'où :
+
+```
+npm error Missing: @emnapi/runtime@1.11.3 from lock file
+```
+
+Le lockfile n'est pas corrompu dans ce cas : il est valide, mais pour npm 11
+seulement.
+
+> **La version de npm n'est pas configurable sur Cloudflare.** Contrairement à
+> `NODE_VERSION`, `PNPM_VERSION` ou `YARN_VERSION`, il n'existe **pas** de
+> `NPM_VERSION` : npm est fourni par l'image de build.
+> C'est donc au lockfile de s'adapter, pas au CI.
+
+### La règle
+
+Le `package-lock.json` versionné a été généré par npm 10.9.2 et contient les
+deux résolutions — il satisfait donc npm 10 **et** npm 11.
+
+Un `npm install` lancé localement avec npm 11 peut le réécrire et retirer les
+entrées propres à npm 10. **Après toute modification des dépendances**, vérifier
+avec la commande exacte du CI avant de pousser :
+
+```bash
+npm run lock:verify
+```
+
+Elle exécute `npm ci --dry-run` sous npm 10.9.2. Si elle passe, Cloudflare
+passera. Si elle affiche `Missing: … from lock file`, régénérer le lockfile
+avec la même version :
+
+```bash
+npx --yes npm@10.9.2 install --package-lock-only
+```
+
+*Dépannage en dernier recours :* remplacer la build command par
+`npm install --engine-strict=false && npm run build`. `npm install` tolère
+l'écart au lieu de le refuser — au prix de builds qui ne sont plus strictement
+reproductibles.
 
 À la fin, le site est en ligne sur `https://<projet>.pages.dev`. C'est déjà une
 URL publique fonctionnelle, HTTPS compris — utile pour vérifier avant de brancher

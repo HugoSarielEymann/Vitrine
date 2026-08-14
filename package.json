@@ -6,7 +6,7 @@
   "description": "Site vitrine — logiciels et tutoriels d'Hugo Eymann.",
   "engines": {
     "node": ">=22",
-    "npm": ">=11"
+    "npm": ">=10"
   },
   "scripts": {
     "dev": "astro dev",
@@ -14,7 +14,8 @@
     "build": "astro check && astro build",
     "build:fast": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "lock:verify": "npx --yes npm@10.9.2 clean-install --dry-run --progress=false"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.5",
