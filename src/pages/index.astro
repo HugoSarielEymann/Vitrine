@@ -253,7 +253,11 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
 
   .hero__scrim {
     position: absolute;
-    inset: 0;
+    /* Le voile déborde LARGEMENT sous la section. Tant que sa retombée n'est
+       pas terminée à la frontière du hero, il reste un résidu d'assombrissement
+       qui s'interrompt net et se lit comme un filtre posé sur la zone. En le
+       laissant s'éteindre dans la section suivante, la frontière n'existe plus. */
+    inset: -12% -6% -32% -6%;
     z-index: 0;
     pointer-events: none;
     /* Deux règles apprises à la dure sur ce voile :
@@ -264,24 +268,53 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long'
        2. Une ELLIPSE qui s'éteint dans toutes les directions, pas un dégradé
           linéaire. Un linéaire garde sa pleine opacité jusqu'au bord du
           conteneur et dessine une arête horizontale nette au bas du hero. */
+    /* Retombée gaussienne. Trois arrêts suffisent à un dégradé « correct »,
+       mais l'interpolation linéaire entre eux laisse une cassure de pente que
+       l'œil détecte comme un anneau. Huit arrêts approchant une courbe en
+       cloche, plus un flou, donnent une extinction que rien ne trahit. */
     background: radial-gradient(
-      105% 88% at 16% 46%,
-      rgb(0 0 0 / 0.84) 0%,
-      rgb(0 0 0 / 0.52) 40%,
-      rgb(0 0 0 / 0) 72%
+      74% 60% at 20% 44%,
+      rgb(0 0 0 / 0.74) 0%,
+      rgb(0 0 0 / 0.70) 16%,
+      rgb(0 0 0 / 0.60) 29%,
+      rgb(0 0 0 / 0.45) 41%,
+      rgb(0 0 0 / 0.30) 52%,
+      rgb(0 0 0 / 0.17) 63%,
+      rgb(0 0 0 / 0.08) 74%,
+      rgb(0 0 0 / 0.03) 84%,
+      rgb(0 0 0 / 0) 93%
     );
+    /* Le flou efface le banding résiduel des dégradés très sombres ET adoucit
+       les bords propres de l'élément : le rectangle du voile cesse d'exister. */
+    filter: blur(26px);
+    /* Respiration très lente. Un voile parfaitement immobile devant un fond
+       animé finit par se voir ; en dérivant, il se confond avec la nébuleuse.
+       Animation en transform/opacity uniquement : le compositeur s'en charge,
+       aucun recalcul du flou à chaque frame. */
+    animation: scrim-breathe 26s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  @keyframes scrim-breathe {
+    0%, 100% { transform: scale(1) translate3d(0, 0, 0); opacity: 1; }
+    50% { transform: scale(1.07) translate3d(1.5%, -1%, 0); opacity: 0.9; }
   }
   @media (width < 62rem) {
     /* Mobile : le portail est en haut, le texte dessous. Le voile redevient
        vertical, mais se rouvre sur les derniers pourcents pour rejoindre la
        section suivante sans marche. */
     .hero__scrim {
+      inset: -8% -10% -26% -10%;
       background: linear-gradient(
         to bottom,
         rgb(0 0 0 / 0) 0%,
-        rgb(0 0 0 / 0.5) 26%,
-        rgb(0 0 0 / 0.8) 52%,
-        rgb(0 0 0 / 0.8) 86%,
+        rgb(0 0 0 / 0.22) 14%,
+        rgb(0 0 0 / 0.48) 26%,
+        rgb(0 0 0 / 0.68) 38%,
+        rgb(0 0 0 / 0.76) 50%,
+        rgb(0 0 0 / 0.72) 66%,
+        rgb(0 0 0 / 0.5) 79%,
+        rgb(0 0 0 / 0.22) 89%,
         rgb(0 0 0 / 0) 100%
       );
     }
