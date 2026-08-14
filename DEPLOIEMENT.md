@@ -60,13 +60,45 @@ puis relancer le `git push -u origin main`.
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 | Root directory | *(laisser vide)* |
-| Node version | `22` ou plus — variable `NODE_VERSION` |
 
-> **Node.** Cloudflare utilise encore une version de Node ancienne par défaut
-> sur certains projets. Ajouter une variable d'environnement `NODE_VERSION`
-> à `22` évite un échec de build peu explicite.
+4. **Variables d'environnement** — onglet *Settings → Environment variables* :
 
-4. **Save and Deploy.** Le premier build prend une à deux minutes.
+| Variable | Valeur | Pourquoi |
+| --- | --- | --- |
+| `NPM_VERSION` | `11.6.2` | **Obligatoire.** Voir l'encadré ci-dessous. |
+| `NODE_VERSION` | `24` | Facultatif : Cloudflare fournit déjà Node 24. |
+
+> ### Pourquoi `NPM_VERSION` est obligatoire
+>
+> Cloudflare installe les dépendances avec `npm ci`, qui exige que
+> `package-lock.json` soit **exactement** synchronisé avec `package.json`.
+> Or npm 10 et npm 11 ne résolvent pas identiquement les sous-arbres
+> optionnels propres à une plateforme : le moteur Markdown `satteri` embarque
+> un repli `wasm32-wasi` que npm n'installe pas sous Windows, et dont la
+> dépendance `@emnapi/*` se résout en `1.11.1` sous npm 11, `1.11.3` sous npm 10.
+>
+> Sans cette variable, le build échoue sur :
+>
+> ```
+> npm error `npm ci` can only install packages when your package.json
+> npm error and package-lock.json ... are in sync.
+> npm error Missing: @emnapi/runtime@1.11.3 from lock file
+> ```
+>
+> Le lockfile n'est pas corrompu : il est valide, mais **pour npm 11**.
+> Le champ `engines` de `package.json` et le `engine-strict=true` du `.npmrc`
+> transforment désormais cet échec opaque en un message clair
+> (« Unsupported engine ») si la variable venait à manquer.
+>
+> **Règle générale :** la version de npm en CI doit suivre celle de la machine
+> qui écrit le lockfile. Après une montée de npm en local, mettre
+> `NPM_VERSION` à jour — et vérifier avec `npm ci` avant de pousser.
+>
+> *Repli si le problème réapparaît :* remplacer la build command par
+> `npm install && npm run build`. `npm install` tolère l'écart au lieu de le
+> refuser, au prix de builds qui ne sont plus strictement reproductibles.
+
+5. **Save and Deploy.** Le premier build prend une à deux minutes.
 
 À la fin, le site est en ligne sur `https://<projet>.pages.dev`. C'est déjà une
 URL publique fonctionnelle, HTTPS compris — utile pour vérifier avant de brancher

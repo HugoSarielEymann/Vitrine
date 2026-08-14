@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "description": "Site vitrine — logiciels et tutoriels d'Hugo Eymann.",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=11"
+  },
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
