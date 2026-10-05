@@ -49,6 +49,14 @@ puis relancer le `git push -u origin main`.
 
 ## Étape 3 — Créer le projet Cloudflare Pages
 
+> **Ce qui existe en réalité** : le projet est un **Worker** (« Workers Builds :
+> vitrine »), pas un projet Pages. Cloudflare construit avec `npm run build`,
+> puis met en ligne avec `npx wrangler deploy`, qui sert `dist/` comme
+> ressources statiques selon [`wrangler.jsonc`](wrangler.jsonc). Le domaine
+> `hugoeymann.com` est branché sur ce Worker. Les étapes ci-dessous décrivent
+> le chemin Pages d'origine ; la section « `wrangler.jsonc` » plus bas dit ce
+> qui compte aujourd'hui.
+
 1. Ouvrir le tableau de bord Cloudflare → **Workers & Pages** → **Create** →
    onglet **Pages** → **Connect to Git**.
 2. Autoriser Cloudflare à accéder à GitHub, puis choisir le dépôt **Vitrine**.
@@ -65,6 +73,28 @@ Aucune variable d'environnement n'est nécessaire. Cloudflare fournit déjà
 Node 24 ; `NODE_VERSION` est facultatif.
 
 4. **Save and Deploy.** Le premier build prend une à deux minutes.
+
+---
+
+## ⚠️ `wrangler.jsonc` doit rester dans le dépôt
+
+Le 5 octobre 2026, la mise en ligne a échoué alors que le build passait.
+`npx wrangler deploy` prend la **dernière** version de Wrangler (ce jour-là la
+4.147.0), et, faute de fichier de configuration, celle-ci configure le projet
+toute seule : elle a lancé `astro add cloudflare`, installé la dernière version
+de l'adaptateur Cloudflare, incompatible avec notre Astro, puis reconstruit
+avec :
+
+```
+[MISSING_EXPORT] "renderForPrerender" is not exported by "node_modules/astro/dist/core/app/entrypoints/index.js".
+```
+
+Le site est statique : [`wrangler.jsonc`](wrangler.jsonc) dit seulement de
+servir `dist/` (et la page 404 pour une adresse inconnue), et Wrangler ne touche
+plus au projet. **Ne pas ajouter l'adaptateur `@astrojs/cloudflare`** : il n'a
+rien à faire sur un site statique. Un échec de mise en ligne laisse la version
+précédente en ligne ; le journal se lit dans le tableau de bord (Workers &
+Pages → vitrine → Builds), GitHub ne reçoit que « échec ».
 
 ---
 

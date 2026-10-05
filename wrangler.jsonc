@@ -1,0 +1,17 @@
+// Mise en ligne sur Cloudflare Workers : Workers Builds lance `npm run build`,
+// puis `npx wrangler deploy`, qui lit ce fichier.
+//
+// Ce fichier est indispensable. Sans lui, Wrangler configure le projet tout
+// seul : depuis la 4.147 (octobre 2026), il lance `astro add cloudflare`,
+// installe la dernière version de l'adaptateur (incompatible avec notre Astro)
+// et le build casse. Le site est 100 % statique : on sert `dist/`, rien de plus.
+// Voir DEPLOIEMENT.md.
+{
+  "name": "vitrine",
+  "compatibility_date": "2026-10-05",
+  "assets": {
+    "directory": "./dist",
+    // Une adresse inconnue reçoit la page 404 du site, avec le statut 404.
+    "not_found_handling": "404-page"
+  }
+}
