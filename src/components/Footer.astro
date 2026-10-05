@@ -94,7 +94,10 @@ const year = new Date().getFullYear();
 
   .foot__name {
     font-family: var(--font-display);
-    font-size: var(--step-1);
+    font-weight: 500;
+    /* Jost se pose à 80 % (global.css) ; un nom court, de taille moyenne,
+       ne perd qu'un dixième. */
+    font-size: calc(var(--step-1) * 1.125);
     line-height: 1;
   }
   .foot__tag {

@@ -76,7 +76,7 @@
   --color-ink-500: #828997;
 
   /* --- Typographie --- */
-  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-display: "Jost", "Century Gothic", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
   --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
@@ -107,6 +107,30 @@
 @keyframes twinkle {
   0%, 100% { opacity: 0.25; }
   50%      { opacity: 1; }
+}
+
+/* ============================================================================
+   POLICE D'AFFICHAGE — Jost, une géométrique au dessin spatial (charte du
+   5 octobre 2026 ; elle remplace Instrument Serif). Police variable servie
+   depuis public/fonts/jost (licence OFL, à côté). Plus large qu'un serif de
+   titrage, elle se pose un cinquième plus petite : `size-adjust` le fait
+   ici, une fois, et l'échelle typographique garde ses valeurs.
+   ========================================================================= */
+@font-face {
+  font-family: "Jost";
+  src: url("/fonts/jost/Jost-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 80%;
+}
+@font-face {
+  font-family: "Jost";
+  src: url("/fonts/jost/Jost-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+  size-adjust: 80%;
 }
 
 /* ============================================================================
@@ -149,7 +173,7 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.05;
     letter-spacing: -0.015em;
     color: var(--color-ink-100);

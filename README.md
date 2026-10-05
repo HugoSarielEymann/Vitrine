@@ -77,8 +77,8 @@ fichier ; aucune page à modifier.
 
 ### Fontes auto-hébergées
 
-Instrument Serif, Inter et JetBrains Mono sont servies depuis `node_modules`
-via Fontsource. Aucun appel à `fonts.googleapis.com` : une connexion tierce en
+Inter et JetBrains Mono sont servies depuis `node_modules` via Fontsource ;
+Jost, la police d'affichage (variable, licence OFL), depuis `public/fonts/jost`. Aucun appel à `fonts.googleapis.com` : une connexion tierce en
 moins sur le chemin critique, et pas de transfert d'IP vers un tiers à déclarer.
 
 ---
