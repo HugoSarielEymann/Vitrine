@@ -186,7 +186,8 @@ Le plus simple : **Rules → Redirect Rules → Create rule**.
 
 ## Étape 5 — Après la mise en ligne
 
-Une fois le domaine définitif connu, mettre à jour **deux** endroits :
+Une fois le domaine définitif connu, mettre à jour **deux** endroits (fait le
+5 octobre 2026 : `https://hugoeymann.com`) :
 
 - `astro.config.mjs` → `site: 'https://exemple.fr'`
 - `src/consts.ts` → `SITE.url`

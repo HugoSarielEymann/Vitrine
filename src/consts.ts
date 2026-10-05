@@ -14,8 +14,8 @@ export const SITE = {
   description:
     "Vitrine des logiciels d'Hugo Eymann : outils d'analyse, générateurs de code et pipelines visuels, accompagnés de tutoriels détaillés.",
   locale: 'fr-FR',
-  /** Renseigner le domaine définitif ici ET dans astro.config.mjs. */
-  url: 'https://vitrine.pages.dev',
+  /** Domaine définitif : le même que `site` dans astro.config.mjs. */
+  url: 'https://hugoeymann.com',
 } as const;
 
 export const NAV = [

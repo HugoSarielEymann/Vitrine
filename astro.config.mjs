@@ -7,8 +7,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  // À remplacer par le domaine définitif une fois Cloudflare branché.
-  site: 'https://vitrine.pages.dev',
+  // Le domaine définitif, branché sur le Worker Cloudflare : il alimente les
+  // URL canoniques, le sitemap et le flux RSS (même valeur que SITE.url).
+  site: 'https://hugoeymann.com',
 
   integrations: [react(), mdx(), sitemap()],
 

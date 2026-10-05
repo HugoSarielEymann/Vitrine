@@ -176,8 +176,8 @@ Le sommaire latéral se construit tout seul à partir des titres `##`.
       est un gabarit, pas du contenu.
 - [ ] **Mentions légales** — champs éditeur obligatoires (LCEN art. 6-III).
 - [ ] **Portrait** — déposer l'image dans `public/` et la brancher dans `a-propos`.
-- [ ] **Domaine** — renseigner `site` dans `astro.config.mjs` **et** `SITE.url`
-      dans `src/consts.ts`.
+- [x] **Domaine** — `https://hugoeymann.com` dans `site` (`astro.config.mjs`) **et**
+      `SITE.url` (`src/consts.ts`).
 - [ ] **Image de partage** — ajouter un `og:image` (1200×630) dans `public/`.
 - [ ] **Pages Labo** — trois pistes de design à arbitrer, puis à supprimer.
 
