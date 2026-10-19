@@ -96,6 +96,17 @@ const pistes = [
       ))
     }
   </section>
+
+  <!-- Le dialecte cristal n'est pas une piste à arbitrer : c'est la matière
+       de deux autres logiciels, montrée pour ce qu'elle est. -->
+  <section class="shell autre">
+    <a href="/cristal" class="autre__lien hairline">
+      <span class="autre__tag">Hors concours · dialecte</span>
+      <span class="autre__titre">Le dialecte cristal de la Graine et de Géode</span>
+      <span class="autre__dit">Même grammaire, autre matière : le tourbillon d’ORT, la géode en coupe, le chemin d’un système, la matière. Quatre pages.</span>
+      <span class="autre__cta">Entrer dans le cristal →</span>
+    </a>
+  </section>
 </Base>
 
 <style>
@@ -217,4 +228,31 @@ const pistes = [
     text-transform: uppercase;
     color: var(--accent);
   }
+
+  .autre { padding-bottom: 5rem; }
+  .autre__lien {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1.75rem 2rem;
+    border-radius: 20px;
+    color: inherit;
+    background:
+      radial-gradient(60% 120% at 100% 0%, rgb(240 82 176 / 0.14), transparent 60%),
+      radial-gradient(50% 100% at 0% 100%, rgb(196 242 74 / 0.1), transparent 60%),
+      linear-gradient(160deg, #16122b, #07050f);
+    transition: transform 0.5s var(--ease-cosmic), border-color 0.5s var(--ease-cosmic);
+  }
+  .autre__lien:hover { transform: translateY(-3px); border-color: rgb(79 208 245 / 0.5); }
+  .autre__tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.22em; text-transform: uppercase; color: #c4f24a; }
+  .autre__titre {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: var(--step-2);
+    background: linear-gradient(180deg, #f5fdff, #9be9ff 45%, #3594da);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .autre__dit { color: var(--color-ink-500); max-width: 64ch; }
+  .autre__cta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: #a6eeff; }
 </style>

@@ -1,0 +1,537 @@
+---
+/**
+ * Vortex — l'œil d'ORT, cœur du dialecte cristal.
+ *
+ * Portage en fragment shader de Graine/src/Graine.App/Controls/VortexCore.cs :
+ * les mêmes huit bandes (épaisses à halo, puis nettes), quatre traînées qui
+ * filent plus vite qu'elles, un cœur sombre qui respire et trois orbes de sève.
+ * Mêmes rayons, épaisseurs, vitesses et couleurs que l'application.
+ *
+ * Rien n'y est décor, comme dans la Graine :
+ *  - les anneaux tournent avec l'ÉNERGIE, nourrie par des faits — ici les gestes
+ *    du visiteur (défiler, cliquer, une touche) et les événements de la page
+ *    (`vortex:kick`). Elle retombe de moitié toutes les 1,6 s ;
+ *  - un orbe allumé = une chose vraie (selon la page : une page déjà visitée,
+ *    un terrain semé). Un orbe au moins allumé = un système vit : dérive lente ;
+ *  - rien ne vit et personne ne bouge : les anneaux sont immobiles, seul le
+ *    cœur respire.
+ *
+ * Coût : un quad, une passe ; dessiné seulement quand l'horloge commune
+ * (lib/motion.ts) le demande, à sa cadence, et jamais hors écran.
+ */
+interface Orb {
+  /** Clé de l'orbe (page visitée, terrain…). */
+  key: string;
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  id?: string;
+  /** Largeur CSS maximale. */
+  size?: string;
+  /** Les trois orbes, de gauche à droite. */
+  orbs?: Orb[];
+  /** Les orbes s'allument selon les pages déjà visitées du dialecte. */
+  orbsFromVisits?: boolean;
+  /** Les gestes du visiteur nourrissent l'énergie du tourbillon. */
+  gestures?: boolean;
+  /** Aplatissement : 1 de face, 0,62 un œil vu de biais (valeur de la Graine). */
+  tilt?: number;
+  class?: string;
+}
+
+const {
+  id,
+  size = '40rem',
+  orbs = [],
+  orbsFromVisits = false,
+  gestures = false,
+  tilt = 0.62,
+  class: className,
+} = Astro.props;
+
+// Emplacements des orbes dans le tourbillon (VortexCore.cs, `places`) :
+// x, y en fraction du canvas non incliné, w en fraction du diamètre.
+const PLACES = [
+  { x: 0.36, y: 0.5, w: 0.11 },
+  { x: 0.5, y: 0.56, w: 0.14 },
+  { x: 0.63, y: 0.47, w: 0.1 },
+];
+const ratio = tilt + 0.08;
+---
+
+<div
+  class:list={['vortex', className]}
+  id={id}
+  data-vortex
+  data-tilt={tilt}
+  data-gestures={gestures ? '' : undefined}
+  data-visits={orbsFromVisits ? orbs.map((o) => o.key).join(',') : undefined}
+  style={`--vortex-size:${size};--vortex-ratio:${ratio}`}
+>
+  <canvas class="vortex__canvas" aria-hidden="true"></canvas>
+  <div class="vortex__fallback" aria-hidden="true"></div>
+
+  {
+    orbs.slice(0, 3).map((orb, i) => {
+      const p = PLACES[i];
+      // Le canvas mesure D × D·(tilt + 0,08) : on ramène la position de l'orbe
+      // dans ce cadre pour que la zone cliquable tombe exactement dessus.
+      const top = 50 + ((tilt * (p.y - 0.5)) / ratio) * 100;
+      const style = `left:${p.x * 100}%;top:${top}%;width:${p.w * 100}%;height:${((p.w * 0.62) / ratio) * 100}%`;
+      return orb.href ? (
+        <a class="vortex__orb" href={orb.href} style={style} data-orb={orb.key} aria-label={orb.label}>
+          <span class="vortex__orb-tip">{orb.label}</span>
+        </a>
+      ) : (
+        <span class="vortex__orb" style={style} data-orb={orb.key} role="img" aria-label={orb.label}>
+          <span class="vortex__orb-tip">{orb.label}</span>
+        </span>
+      );
+    })
+  }
+</div>
+
+<style>
+  .vortex {
+    position: relative;
+    width: min(100%, var(--vortex-size));
+    aspect-ratio: 1 / var(--vortex-ratio);
+    margin-inline: auto;
+  }
+  /* Le canvas DÉBORDE de l'œil : le halo de la graine mesure 1,15 fois le
+     diamètre (VortexCore), et un canvas à la taille exacte le couperait net
+     sur les côtés. L'élément garde la taille de l'œil — c'est sur lui que se
+     calent les orbes cliquables. */
+  .vortex__canvas {
+    position: absolute;
+    left: -9%;
+    top: -16%;
+    width: 118%;
+    height: 132%;
+    pointer-events: none;
+    display: block;
+    opacity: 0;
+    transition: opacity 1.2s var(--ease-cosmic);
+  }
+  .vortex[data-live] .vortex__canvas { opacity: 1; }
+
+  /* Repli sans WebGL : la silhouette de l'œil, en dégradés. */
+  .vortex__fallback {
+    position: absolute;
+    inset: 8% 4%;
+    border-radius: 50%;
+    background:
+      radial-gradient(closest-side, #070a10 34%, transparent 36%),
+      radial-gradient(closest-side, transparent 40%, rgb(196 242 74 / 0.5) 42%, transparent 46%),
+      radial-gradient(closest-side, transparent 52%, rgb(240 82 176 / 0.7) 56%, transparent 62%),
+      radial-gradient(closest-side, transparent 64%, rgb(79 208 245 / 0.75) 67%, transparent 71%),
+      radial-gradient(closest-side, transparent 75%, rgb(144 103 240 / 0.6) 79%, transparent 84%),
+      radial-gradient(closest-side, transparent 86%, rgb(247 139 203 / 0.7) 90%, transparent 95%);
+  }
+  .vortex[data-live] .vortex__fallback { display: none; }
+
+  .vortex__orb {
+    position: absolute;
+    translate: -50% -50%;
+    border-radius: 50%;
+    z-index: 2;
+  }
+  a.vortex__orb:focus-visible {
+    outline: 2px solid var(--cr-sap, #c4f24a);
+    outline-offset: 4px;
+  }
+  .vortex__orb-tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.6rem);
+    translate: -50% 4px;
+    padding: 0.3rem 0.7rem;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-100);
+    background: rgb(11 8 23 / 0.9);
+    border: 1px solid rgb(196 242 74 / 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, translate 0.35s var(--ease-cosmic);
+  }
+  .vortex__orb:hover .vortex__orb-tip,
+  .vortex__orb:focus-visible .vortex__orb-tip {
+    opacity: 1;
+    translate: -50% 0;
+  }
+</style>
+
+<script>
+  import { join, leave, wake, reducedMotion, BREATHING, DRIFT, EVENT, type Mover } from '../lib/motion';
+
+  const VERT = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+
+  // Couleurs de VortexCore.cs, en linéaire 0..1.
+  const FRAG = `
+    precision highp float;
+    uniform vec2  uRes;     // taille CSS du canvas
+    uniform float uDpr;
+    uniform float uD;       // diamètre CSS du tourbillon
+    uniform float uTilt;
+    uniform float uAngle;   // rotation accumulée, en degrés
+    uniform float uBreath;  // 0..1, respiration du cœur
+    uniform vec3  uOrbs;    // opacité des trois orbes
+    uniform float uAA;      // demi-largeur d'anticrénelage, en unités de rayon
+
+    #define SAP      vec3(0.769, 0.949, 0.290)
+    #define SAPB     vec3(0.886, 1.000, 0.541)
+    #define TENDRIL  vec3(0.941, 0.322, 0.690)
+    #define TENDRILL vec3(0.969, 0.545, 0.796)
+    #define NEBULA   vec3(0.565, 0.404, 0.941)
+    #define NEBULAD  vec3(0.357, 0.200, 0.722)
+    #define CRYS     vec3(0.310, 0.816, 0.961)
+    #define CRYSB    vec3(0.651, 0.933, 1.000)
+    #define CRYSL    vec3(0.910, 0.984, 1.000)
+    #define CRYSD    vec3(0.137, 0.537, 0.816)
+    #define PLUM     vec3(0.659, 0.165, 0.494)
+
+    // Composition « par-dessus », en alpha prémultiplié : l'ordre de dessin
+    // est celui de l'application (halo, bandes, traînées, cœur, orbes).
+    void over(inout vec4 acc, vec3 c, float a) {
+      acc.rgb = c * a + acc.rgb * (1.0 - a);
+      acc.a = a + acc.a * (1.0 - a);
+    }
+
+    vec3 grad4(vec3 a, vec3 b, vec3 c, vec3 d, float s) {
+      s = clamp(s, 0.0, 1.0) * 3.0;
+      if (s < 1.0) return mix(a, b, s);
+      if (s < 2.0) return mix(b, c, s - 1.0);
+      return mix(c, d, s - 2.0);
+    }
+
+    float band(float r, float R, float hw) {
+      return 1.0 - smoothstep(hw - uAA, hw + uAA, abs(r - R));
+    }
+
+    // Rotation d'écran (y vers le bas, angle positif = sens horaire), inversée :
+    // on ramène le point dans le repère de l'anneau tourné.
+    vec2 unrot(vec2 q, float deg) {
+      float a = radians(deg);
+      float c = cos(a), s = sin(a);
+      return vec2(c * q.x + s * q.y, -s * q.x + c * q.y);
+    }
+
+    // Une bande dont la couleur change le long du tour. Le dégradé est celui
+    // d'un pinceau linéaire (0,0)→(1,1) sur la boîte de l'anneau : une
+    // projection sur la diagonale, continue par construction — pas d'atan(),
+    // donc aucune couture possible quand l'anneau tourne.
+    void ring(inout vec4 acc, vec2 q, float r, float R, float T, float speed,
+              vec3 c0, vec3 c1, vec3 c2, vec3 c3, float op) {
+      float m = band(r, R, T / 260.0);
+      if (m <= 0.0) return;
+      vec2 l = unrot(q, uAngle * speed);
+      float rr = R * 0.5;
+      float s = (l.x + l.y + 2.0 * rr) / (4.0 * rr);
+      over(acc, grad4(c0, c1, c2, c3, s), m * op);
+    }
+
+    // Une traînée : un arc qui s'allume de sa queue (transparente) à sa tête.
+    // L'atan() est ici sans danger : la queue est transparente, la coupure
+    // tombe dans du vide.
+    void streak(inout vec4 acc, vec2 q, float r, float R, float sweepDeg,
+                float T, float speed, vec3 head) {
+      float m = band(r, R, T / 260.0);
+      if (m <= 0.0) return;
+      vec2 l = unrot(q, uAngle * speed);
+      float phi = atan(l.y, l.x);
+      if (phi < 0.0) phi += 6.2831853;
+      float sw = radians(sweepDeg);
+      if (phi > sw) return;
+      float t = phi / sw;
+      over(acc, head, m * t * t);
+    }
+
+    void orb(inout vec4 acc, vec2 pos, vec2 place, float w, float op) {
+      if (op <= 0.001) return;
+      vec2 c = vec2(place.x - 0.5, uTilt * (place.y - 0.5));
+      float g = length((pos - c) / vec2(w * 0.5, w * 0.31));
+      if (g >= 1.0) return;
+      vec3 col; float a;
+      if (g < 0.45) { col = mix(vec3(0.957, 1.0, 0.690), SAP, g / 0.45); a = 1.0; }
+      else { float t = (g - 0.45) / 0.55; col = mix(SAP, vec3(0.490, 0.690, 0.129), t); a = mix(1.0, 0.25, t); }
+      a *= 1.0 - smoothstep(0.9, 1.0, g);
+      over(acc, col, a * op);
+    }
+
+    void main() {
+      vec2 frag = gl_FragCoord.xy / uDpr;
+      // Repère : centre du canvas, y vers le BAS (comme XAML), diamètre = 1.
+      vec2 pos = vec2(frag.x - uRes.x * 0.5, uRes.y * 0.5 - frag.y) / uD;
+      vec2 q = vec2(pos.x, pos.y / uTilt);
+      float r = 2.0 * length(q);
+      vec4 acc = vec4(0.0);
+
+      // --- Le halo de la graine : la source, qui respire ---
+      float g = r / 1.15;
+      if (g < 1.0) {
+        vec3 c; float a;
+        if (g < 0.35) { float t = g / 0.35; c = mix(SAP, TENDRIL, t); a = mix(0.376, 0.188, t); }
+        else { c = TENDRIL; a = mix(0.188, 0.0, (g - 0.35) / 0.65); }
+        over(acc, c, a * (0.55 + 0.35 * uBreath));
+      }
+
+      // --- Les bandes (rayon, épaisseur, vitesse, couleurs, opacité) ---
+      ring(acc, q, r, 0.93, 30.0,  0.3, TENDRIL, NEBULA, CRYS, TENDRIL, 0.16);
+      ring(acc, q, r, 0.91,  5.0,  0.3, TENDRILL, CRYSL, CRYS, TENDRIL, 0.85);
+      ring(acc, q, r, 0.79, 26.0, -0.5, NEBULA, TENDRIL, CRYS, NEBULA, 0.20);
+      ring(acc, q, r, 0.79, 14.0, -0.5, NEBULA, TENDRIL, CRYSB, NEBULAD, 0.85);
+      ring(acc, q, r, 0.67,  9.0,  0.8, CRYS, CRYSL, SAP, CRYSD, 0.90);
+      ring(acc, q, r, 0.57, 22.0, -1.1, TENDRIL, NEBULA, CRYS, TENDRIL, 0.18);
+      ring(acc, q, r, 0.57, 12.0, -1.1, TENDRIL, TENDRILL, NEBULA, PLUM, 0.80);
+
+      // Bande pointillée [1, 3] : 32 tirets, nombre ENTIER — le motif se
+      // raccorde exactement au bout du tour.
+      {
+        float m = band(r, 0.48, 3.0 / 260.0);
+        if (m > 0.0) {
+          vec2 l = unrot(q, uAngle * 1.6);
+          float a = atan(l.y, l.x);
+          float f = fract(a * 32.0 / 6.2831853);
+          float dash = 1.0 - smoothstep(0.22, 0.28, f);
+          vec3 c = grad4(SAPB, CRYSL, SAP, SAP, (l.x + l.y + 0.48) / 0.96);
+          over(acc, c, m * dash * 0.9);
+        }
+      }
+
+      // --- Les traînées : elles filent plus vite que les bandes ---
+      streak(acc, q, r, 0.85, 110.0, 4.0,  1.7, CRYSL);
+      streak(acc, q, r, 0.72,  80.0, 6.0, -2.2, TENDRILL);
+      streak(acc, q, r, 0.62, 130.0, 3.0,  2.6, SAPB);
+      streak(acc, q, r, 0.52,  70.0, 5.0, -3.0, CRYSB);
+
+      // --- Le cœur sombre ---
+      float k = r / 0.38;
+      if (k < 1.0) {
+        vec3 c; float a;
+        if (k < 0.7) { float t = k / 0.7; c = mix(vec3(0.043, 0.102, 0.024), vec3(0.027, 0.039, 0.063), t); a = mix(1.0, 0.94, t); }
+        else { float t = (k - 0.7) / 0.3; c = mix(vec3(0.027, 0.039, 0.063), vec3(0.027, 0.020, 0.071), t); a = mix(0.94, 0.0, t); }
+        over(acc, c, a * (0.9 + 0.1 * uBreath));
+      }
+
+      // --- Les orbes de sève : une par chose vivante ---
+      orb(acc, pos, vec2(0.36, 0.50), 0.11, uOrbs.x);
+      orb(acc, pos, vec2(0.50, 0.56), 0.14, uOrbs.y);
+      orb(acc, pos, vec2(0.63, 0.47), 0.10, uOrbs.z);
+
+      gl_FragColor = acc;
+    }
+  `;
+
+  const VISITS_KEY = 'cristal:visites';
+
+  function readVisits(): string[] {
+    try {
+      const raw = localStorage.getItem(VISITS_KEY);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function mount(host: HTMLElement) {
+    const canvas = host.querySelector<HTMLCanvasElement>('.vortex__canvas');
+    if (!canvas) return () => {};
+    const gl = canvas.getContext('webgl', { premultipliedAlpha: true, antialias: false, alpha: true });
+    if (!gl) return () => {};
+
+    const compile = (type: number, src: string) => {
+      const sh = gl.createShader(type)!;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        console.warn('[vortex]', gl.getShaderInfoLog(sh));
+        return null;
+      }
+      return sh;
+    };
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+    if (!vs || !fs) return () => {};
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return () => {};
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const u = (n: string) => gl.getUniformLocation(prog, n);
+    const uRes = u('uRes'), uDpr = u('uDpr'), uD = u('uD'), uTilt = u('uTilt');
+    const uAngle = u('uAngle'), uBreath = u('uBreath'), uOrbs = u('uOrbs'), uAA = u('uAA');
+
+    const tilt = Number(host.dataset.tilt ?? 0.62);
+    gl.uniform1f(uTilt, tilt);
+
+    let cssW = 0, cssH = 0, dpr = 1;
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      cssW = rect.width;
+      cssH = rect.height;
+      const diameter = host.getBoundingClientRect().width;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(cssW * dpr));
+      canvas.height = Math.max(1, Math.round(cssH * dpr));
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(uRes, cssW, cssH);
+      gl.uniform1f(uDpr, dpr);
+      gl.uniform1f(uD, diameter);
+      // Un pixel et demi, exprimé en unités de rayon (et corrigé de l'inclinaison).
+      gl.uniform1f(uAA, (1.5 * 2) / (diameter * tilt));
+    };
+    resize();
+
+    // --- État : énergie, angle, orbes ---
+    // L'angle part de 37° : la composition d'origine de la Graine, où chaque
+    // bande est déjà décalée de sa vitesse × 37.
+    let angle = 37;
+    let energy = 0;
+    const orbTarget = [0, 0, 0];
+    const orbNow = [0.14, 0.14, 0.14];
+
+    const orbKeys = (host.dataset.visits ?? '').split(',').filter(Boolean);
+    const applyVisits = () => {
+      if (!orbKeys.length) return;
+      const seen = new Set(readVisits());
+      orbKeys.forEach((k, i) => (orbTarget[i] = seen.has(k) ? 1 : 0));
+    };
+    applyVisits();
+
+    const alive = () => orbTarget.filter((v) => v > 0.5).length;
+    let visible = true;
+
+    const draw = (breath: number) => {
+      gl.uniform1f(uAngle, angle);
+      gl.uniform1f(uBreath, breath);
+      gl.uniform3f(uOrbs, orbNow[0], orbNow[1], orbNow[2]);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+
+    const mover: Mover = {
+      kind: host.id ? `Tourbillon #${host.id}` : 'Tourbillon',
+      advance(now, dt) {
+        if (!visible) return 0;
+        // L'énergie retombe de moitié toutes les 1,6 s (VortexCore.Advance) ;
+        // un système vivant garde une dérive de 3°/s.
+        energy *= Math.pow(0.5, dt / 1.6);
+        const speed = (alive() > 0 ? 3 : 0) + energy * 22;
+        angle += speed * dt;
+
+        let settling = false;
+        for (let i = 0; i < 3; i++) {
+          const target = orbTarget[i] > 0.5 ? 1 : 0.14;
+          orbNow[i] += (target - orbNow[i]) * Math.min(1, dt * 4);
+          if (Math.abs(target - orbNow[i]) > 0.01) settling = true;
+        }
+
+        const breath = 0.5 - 0.5 * Math.cos((Math.PI * now) / 3);
+        draw(breath);
+
+        const regime = energy > 0.15 ? 'vol' : alive() > 0 ? 'derive' : 'repos';
+        if (regime !== lastRegime || alive() !== lastAlive) {
+          lastRegime = regime;
+          lastAlive = alive();
+          // La page peut dire pourquoi le tourbillon bouge (ligne d'état).
+          host.dispatchEvent(new CustomEvent('vortex:state', { detail: { regime, alive: lastAlive } }));
+        }
+
+        if (energy > 0.15 || settling) return EVENT;
+        return alive() > 0 ? DRIFT : BREATHING;
+      },
+    };
+    let lastRegime = '';
+    let lastAlive = -1;
+
+    host.dataset.live = '';
+
+    if (reducedMotion()) {
+      // Mouvement réduit : un dessin, posé, sans horloge.
+      orbTarget.forEach((t, i) => (orbNow[i] = t > 0.5 ? 1 : 0.14));
+      draw(0.5);
+    } else {
+      join(mover);
+    }
+
+    const kick = (amount: number) => {
+      energy = Math.min(6, energy + Math.max(0, amount));
+      wake(mover);
+    };
+
+    // --- Ce qui nourrit l'énergie ---
+    const onKick = (e: Event) => kick(Number((e as CustomEvent).detail ?? 1));
+    const onOrbs = (e: Event) => {
+      const states = (e as CustomEvent).detail as boolean[];
+      states.forEach((s, i) => (orbTarget[i] = s ? 1 : 0));
+      wake(mover);
+    };
+    host.addEventListener('vortex:kick', onKick);
+    host.addEventListener('vortex:orbs', onOrbs);
+    window.addEventListener('vortex:kick', onKick);
+
+    const controller = new AbortController();
+    if (host.hasAttribute('data-gestures')) {
+      let lastY = scrollY;
+      const opts = { passive: true, signal: controller.signal } as AddEventListenerOptions;
+      addEventListener('scroll', () => {
+        const dy = Math.abs(scrollY - lastY);
+        lastY = scrollY;
+        kick(Math.min(1.2, dy / 380));
+      }, opts);
+      addEventListener('pointerdown', () => kick(1), opts);
+      addEventListener('keydown', () => kick(0.4), opts);
+    }
+
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible) wake(mover);
+    });
+    io.observe(host);
+
+    const ro = new ResizeObserver(() => {
+      resize();
+      wake(mover);
+    });
+    ro.observe(host);
+
+    return () => {
+      leave(mover);
+      io.disconnect();
+      ro.disconnect();
+      controller.abort();
+      host.removeEventListener('vortex:kick', onKick);
+      host.removeEventListener('vortex:orbs', onOrbs);
+      window.removeEventListener('vortex:kick', onKick);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    };
+  }
+
+  let cleanups: Array<() => void> = [];
+  document.addEventListener('astro:page-load', () => {
+    cleanups = [...document.querySelectorAll<HTMLElement>('[data-vortex]')].map(mount);
+  });
+  document.addEventListener('astro:before-swap', () => {
+    cleanups.forEach((c) => c());
+    cleanups = [];
+  });
+</script>

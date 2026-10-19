@@ -11,6 +11,7 @@ import Footer from '../components/Footer.astro';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
+import '../styles/cristal.css';
 
 interface Props {
   title?: string;
@@ -19,6 +20,12 @@ interface Props {
   intensity?: number;
   /** Retire la nav collante (pages plein écran). */
   bare?: boolean;
+  /**
+   * La matière de la page. `cosmos` (défaut) : l'or de la Vitrine.
+   * `cristal` : le dialecte de la Graine et de Géode — mêmes composants,
+   * jetons redéfinis par styles/cristal.css, fond WebGL repeint.
+   */
+  dialect?: 'cosmos' | 'cristal';
 }
 
 const {
@@ -26,6 +33,7 @@ const {
   description = SITE.description,
   intensity = 1,
   bare = false,
+  dialect = 'cosmos',
 } = Astro.props;
 
 const fullTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
@@ -33,7 +41,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url);
 ---
 
 <!doctype html>
-<html lang="fr" class="grain">
+<html lang="fr" class="grain" data-dialect={dialect}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,7 +52,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url);
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#04060d" />
+    <meta name="theme-color" content={dialect === 'cristal' ? '#07050f' : '#04060d'} />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.name} />
@@ -61,6 +69,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url);
     -->
     <script is:inline>
       document.documentElement.classList.add('js');
+      // Au changement de page, le routeur d'Astro remplace les attributs de
+      // <html> par ceux de la nouvelle page : la classe disparaissait, et les
+      // apparitions au défilement ne jouaient plus qu'au premier chargement.
+      document.addEventListener('astro:after-swap', () =>
+        document.documentElement.classList.add('js'),
+      );
     </script>
 
     <!-- Navigation persistante entre pages : le fond ne clignote jamais. -->

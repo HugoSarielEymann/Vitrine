@@ -1,0 +1,424 @@
+---
+import Cristal from '../../layouts/Cristal.astro';
+import Vortex from '../../components/Vortex.astro';
+import Eclat from '../../components/Eclat.astro';
+import Reveal from '../../components/Reveal.astro';
+
+const SENS = [
+  { sens: 'cristal', nom: 'Cristal', dit: 'Ce qui compte et ce qui existe', ex: 'titres, action principale, entité choisie, facette taillée' },
+  { sens: 'seve', nom: 'Sève', dit: 'Ce qui vit et répond', ex: 'un système qui tourne, une étape faite, un orbe allumé' },
+  { sens: 'vrille', nom: 'Vrille', dit: 'Ce qui relie', ex: 'une référence, un appel qui file, une copie en relecture' },
+  { sens: 'nebuleuse', nom: 'Nébuleuse', dit: 'Ce qui appartient', ex: 'un composant, un fond, une lueur' },
+  { sens: 'braise', nom: 'Braise', dit: 'La dérive et le destructif', ex: 'un échec, une facette oubliée, « Arracher »' },
+];
+
+const MOTS = [
+  { mot: 'Graine', dit: 'la description d’un système : ce qu’il est, pas comment il est fait' },
+  { mot: 'Génome', dit: 'ce que la graine devient selon ses priorités, et pourquoi' },
+  { mot: 'Semer', dit: 'mettre une graine en terre sur un terrain' },
+  { mot: 'Vallée', dit: 'les terrains : ce poste, un serveur, une grappe' },
+  { mot: 'Vrille', dit: 'le lien d’un terrain au cœur, le long duquel filent les appels' },
+  { mot: 'Mue', dit: 'un changement de forme qui touche les données' },
+  { mot: 'Dérive', dit: 'l’écart entre ce qui tourne et ce qui est décrit' },
+  { mot: 'Géode', dit: 'un sujet à apprendre, vu en coupe' },
+  { mot: 'Cristal', dit: 'une notion : sa leçon et ses épreuves' },
+  { mot: 'Facette', dit: 'un des six niveaux d’un cristal, de reconnaître à concevoir' },
+  { mot: 'Raviver', dit: 'revoir une facette juste avant l’oubli' },
+  { mot: 'Gemme', dit: 'un cristal aux six facettes taillées' },
+];
+
+const TECHNIQUES = [
+  { nom: 'Fragment shader WebGL', ou: 'L’œil d’ORT, ici même', dit: 'Huit bandes, quatre traînées, un cœur et trois orbes en une passe, aux mesures exactes de VortexCore.cs.' },
+  { nom: 'Une horloge, trois régimes', ou: 'Toutes les pages', dit: 'Respirer à 7 i/s, dériver à 12, ne passer à 60 que pour un événement — et s’arrêter quand tout est posé.' },
+  { nom: 'Long Animation Frames', ou: 'Ctrl+Maj+F', dit: 'Le moniteur compte les images de plus de 50 ms, comme celui de la Graine.' },
+  { nom: 'View Transitions API', ou: 'La géode', dit: 'La gemme d’un cristal se transforme en celle du suivant, sans bibliothèque d’animation.' },
+  { nom: 'CSS Motion Path', ou: 'Le chemin', dit: 'Chaque appel file réellement le long de sa vrille (offset-path), braise s’il échoue.' },
+  { nom: 'Scroll-driven animations', ou: 'Le chemin', dit: 'Les huit étapes s’allument au défilement, au compositeur, sans écouteur JavaScript.' },
+  { nom: '@property', ou: 'La matière', dit: 'Des dégradés qui s’animent vraiment : une variable typée s’interpole, une chaîne non.' },
+  { nom: 'clip-path + drop-shadow', ou: 'Partout', dit: 'Facettes et éclats taillés en polygone ; la lueur suit l’alpha de la forme, pas son rectangle.' },
+];
+---
+
+<Cristal
+  title="L’œil d’ORT — le dialecte cristal"
+  description="Le dialecte cristal de la Graine et de Géode : même grammaire que la Vitrine, autre matière. Le tourbillon d’ORT en WebGL, et ce qui ne change pas."
+  page="oeil"
+>
+  <!-- ============ OUVERTURE ============ -->
+  <header class="shell ouv">
+    <div class="ouv__texte">
+      <Reveal><p class="eyebrow">La Graine · Géode</p></Reveal>
+      <Reveal delay={100}>
+        <h1>Même grammaire,<br /><em class="gilded">autre matière</em>.</h1>
+      </Reveal>
+      <Reveal delay={200}>
+        <p class="ouv__lead">
+          Deux de mes logiciels parlent un autre dialecte que celui de ce site. Ici l’or devient
+          cristal, le vide tire sur le violet, et la lumière ne vient plus d’un soleil mais d’une
+          graine. Tout le reste — la source qui a un bord, le protagoniste rare, les contrepoints
+          qui portent un sens — n’a pas bougé d’un pixel.
+        </p>
+      </Reveal>
+    </div>
+
+    <Reveal delay={150} class="ouv__oeil">
+      <Vortex
+        id="oeil"
+        size="44rem"
+        gestures
+        orbsFromVisits
+        orbs={[
+          { key: 'geode', label: 'La géode', href: '/cristal/geode' },
+          { key: 'graine', label: 'Le chemin', href: '/cristal/graine' },
+          { key: 'matiere', label: 'La matière', href: '/cristal/matiere' },
+        ]}
+      />
+      <p class="ouv__etat" data-etat aria-live="polite">
+        <span class="pastille" data-sens="vierge">Repos</span>
+        <span data-etat-texte>Rien ne vit encore : les anneaux sont immobiles, seul le cœur respire.</span>
+      </p>
+    </Reveal>
+  </header>
+
+  <!-- ============ CE QUI TOURNE ============ -->
+  <section class="shell bande">
+    <div class="regle">
+      <Reveal>
+        <p class="cr-label">Le tourbillon · <strong>rien n’y est décor</strong></p>
+        <h2>Ce qui le fait tourner, <em class="gilded">vraiment</em></h2>
+      </Reveal>
+      <div class="regle__grille">
+        <Reveal delay={0}>
+          <Eclat class="regle__carte">
+            <span class="pastille" data-sens="vrille">Vos gestes</span>
+            <p>Dans la Graine, les anneaux s’emballent quand des appels arrivent. Ici, ce sont vos gestes&nbsp;: défiler, cliquer, appuyer sur une touche. L’énergie retombe de moitié toutes les 1,6&nbsp;s.</p>
+          </Eclat>
+        </Reveal>
+        <Reveal delay={120}>
+          <Eclat class="regle__carte">
+            <span class="pastille" data-sens="seve">Les orbes</span>
+            <p>Un orbe de sève par chose vivante. Ici, une par page du dialecte que vous avez déjà vue. Un orbe allumé suffit pour que le tourbillon dérive, lentement, à 3° par seconde. Survolez-les : ils mènent à leur page.</p>
+          </Eclat>
+        </Reveal>
+        <Reveal delay={240}>
+          <Eclat class="regle__carte">
+            <span class="pastille" data-sens="cristal">Le cœur</span>
+            <p>Il respire en six secondes tant que la page est regardée. Onglet masqué&nbsp;: tout se fige, et rien ne rattrape le temps passé ailleurs. Mouvement réduit demandé&nbsp;: un seul dessin, posé.</p>
+          </Eclat>
+        </Reveal>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LES CINQ SENS ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Sémantique fixe · <strong>cinq sens, jamais un sixième</strong></p>
+      <h2>Une couleur ne change <em class="gilded">jamais de sens</em></h2>
+      <p class="bande__lead">
+        Une pastille d’état emprunte l’un de ces cinq sens ; il n’existe pas de palette d’alerte à
+        part. Le jour où la braise dit autre chose que « dérive », plus rien ne se lit.
+      </p>
+    </Reveal>
+    <ul class="sens">
+      {
+        SENS.map((s, i) => (
+          <Reveal as="li" delay={i * 80} class="sens__item" data-sens={s.sens}>
+            <svg class="sens__hex" viewBox="0 0 100 100" aria-hidden="true">
+              <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" />
+            </svg>
+            <div>
+              <h3>{s.nom}</h3>
+              <p class="sens__dit">{s.dit}</p>
+              <p class="sens__ex">{s.ex}</p>
+            </div>
+          </Reveal>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ============ LE VOCABULAIRE ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Une métaphore · <strong>qui nomme tout</strong></p>
+      <h2>Le vocabulaire <em class="gilded">suit la matière</em></h2>
+      <p class="bande__lead">
+        Du libellé de bouton au message d’erreur, les deux logiciels ne parlent qu’une langue.
+        Personne ne « déploie » dans la Graine : on sème. Personne ne « révise » dans Géode : on ravive.
+      </p>
+    </Reveal>
+    <dl class="mots">
+      {
+        MOTS.map((m, i) => (
+          <Reveal delay={(i % 4) * 60} class="mot">
+            <dt>{m.mot}</dt>
+            <dd>{m.dit}</dd>
+          </Reveal>
+        ))
+      }
+    </dl>
+  </section>
+
+  <!-- ============ LES TROIS PAGES ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">À voir · <strong>trois démonstrations</strong></p>
+      <h2>Le dialecte, <em class="gilded">en mouvement</em></h2>
+    </Reveal>
+    <div class="suite">
+      <Reveal delay={0}>
+        <Eclat href="/cristal/geode" class="suite__carte">
+          <span class="suite__n">02</span>
+          <h3>La géode en coupe</h3>
+          <p>La vraie géode « Comment une IP trouve son chemin » : quatorze cristaux, six facettes chacun, une cellule par facette, et la gemme qui se taille au clic.</p>
+          <span class="suite__go">Ouvrir la géode →</span>
+        </Eclat>
+      </Reveal>
+      <Reveal delay={120}>
+        <Eclat href="/cristal/graine" class="suite__carte">
+          <span class="suite__n">03</span>
+          <h3>Le chemin d’un système</h3>
+          <p>Les huit étapes de la Graine, de l’idée à l’observatoire. Puis la vallée : semez sur trois terrains et regardez les appels filer le long des vrilles.</p>
+          <span class="suite__go">Suivre le chemin →</span>
+        </Eclat>
+      </Reveal>
+      <Reveal delay={240}>
+        <Eclat href="/cristal/matiere" class="suite__carte">
+          <span class="suite__n">04</span>
+          <h3>La matière</h3>
+          <p>Le spécimen : jetons, prisme, facettes, éclats, filets, les trois régimes du mouvement — et le même composant, côte à côte, dans les deux dialectes.</p>
+          <span class="suite__go">Toucher la matière →</span>
+        </Eclat>
+      </Reveal>
+    </div>
+  </section>
+
+  <!-- ============ L'ÉTAT DE L'ART ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Fabrication · <strong>ce que ces pages emploient</strong></p>
+      <h2>Sans bibliothèque, <em class="gilded">au compositeur</em></h2>
+      <p class="bande__lead">
+        Aucune de ces pages ne charge three.js, ni bibliothèque d’animation. Chaque technique
+        dégrade vers « visible et immobile » quand le navigateur ne la connaît pas.
+        <kbd>Ctrl</kbd>&nbsp;<kbd>Maj</kbd>&nbsp;<kbd>F</kbd> ouvre le moniteur de fluidité&nbsp;: les
+        chiffres, plutôt que des promesses.
+      </p>
+    </Reveal>
+    <ol class="techs">
+      {
+        TECHNIQUES.map((t, i) => (
+          <Reveal as="li" delay={(i % 2) * 90} class="tech">
+            <span class="tech__n">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <h3>{t.nom}</h3>
+              <p>{t.dit}</p>
+            </div>
+            <span class="tech__ou">{t.ou}</span>
+          </Reveal>
+        ))
+      }
+    </ol>
+  </section>
+</Cristal>
+
+<style>
+  /* ---------- Ouverture ---------- */
+  .ouv {
+    display: grid;
+    gap: 1rem 3rem;
+    align-items: center;
+    padding-block: clamp(2.5rem, 7vw, 5rem) 2rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 64rem) {
+    .ouv { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr); }
+  }
+  .ouv__texte { display: flex; flex-direction: column; gap: 1.2rem; align-items: flex-start; }
+  .ouv h1 { font-size: var(--step-4); }
+  .ouv h1 em { font-style: italic; }
+  .ouv__lead { max-width: 46ch; font-size: var(--step-1); line-height: 1.6; color: var(--color-ink-300); }
+
+  .ouv__etat {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem 0.9rem;
+    margin-top: 0.75rem;
+    min-height: 2.6em;
+    text-align: center;
+    font-size: 0.86rem;
+    color: var(--color-ink-500);
+  }
+
+  /* ---------- Bandes ---------- */
+  .bande { padding-block: clamp(3.5rem, 8vw, 6.5rem); }
+  .bande h2 { font-size: var(--step-3); margin-block: 0.75rem 1rem; }
+  .bande h2 em { font-style: italic; }
+  .bande__lead { max-width: 60ch; color: var(--color-ink-500); margin-bottom: 2.5rem; }
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.75em;
+    padding: 0.1em 0.45em;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    color: var(--color-ink-100);
+  }
+
+  .regle__grille {
+    display: grid;
+    gap: 1.1rem;
+    margin-top: 2.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 56rem) { .regle__grille { grid-template-columns: repeat(3, 1fr); } }
+  .regle__grille > :global(*) { height: 100%; }
+  :global(.regle__carte) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1.6rem 1.6rem 1.75rem;
+  }
+  :global(.regle__carte) p { color: var(--color-ink-300); font-size: 0.94rem; }
+
+  /* ---------- Sens ---------- */
+  .sens {
+    display: grid;
+    gap: 1rem;
+    list-style: none;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 40rem) { .sens { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 72rem) { .sens { grid-template-columns: repeat(5, 1fr); } }
+  :global(.sens__item) {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1.25rem 0;
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+  }
+  @media (width >= 72rem) {
+    :global(.sens__item) { flex-direction: column; }
+  }
+  .sens__hex { width: 2.6rem; flex: none; overflow: visible; }
+  .sens__hex polygon {
+    fill: color-mix(in oklab, var(--sens) 20%, transparent);
+    stroke: var(--sens);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 8px color-mix(in oklab, var(--sens) 60%, transparent));
+  }
+  :global(.sens__item) h3 {
+    font-size: var(--step-1);
+    color: color-mix(in oklab, var(--sens) 75%, white);
+  }
+  .sens__dit { color: var(--color-ink-100); font-size: 0.92rem; margin-top: 0.2rem; }
+  .sens__ex { color: var(--color-ink-500); font-size: 0.84rem; margin-top: 0.35rem; }
+
+  /* ---------- Mots ---------- */
+  .mots {
+    display: grid;
+    gap: 0 2.5rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 48rem) { .mots { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 76rem) { .mots { grid-template-columns: repeat(3, 1fr); } }
+  :global(.mot) {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  }
+  :global(.mot) dt {
+    font-family: var(--font-display);
+    font-weight: 500;
+    color: var(--cr-bright);
+  }
+  :global(.mot) dd { color: var(--color-ink-300); font-size: 0.9rem; }
+
+  /* ---------- Suite ---------- */
+  .suite {
+    display: grid;
+    gap: 1.1rem;
+    margin-top: 2.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 60rem) { .suite { grid-template-columns: repeat(3, 1fr); } }
+  .suite > :global(*) { height: 100%; }
+  :global(.suite__carte) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.9rem 1.75rem;
+    color: inherit;
+  }
+  :global(.suite__carte) h3 { font-size: var(--step-2); }
+  :global(.suite__carte) p { color: var(--color-ink-500); font-size: 0.94rem; flex: 1; }
+  .suite__n { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--cr-deep); }
+  .suite__go {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cr-bright);
+    transition: letter-spacing 0.4s var(--ease-cosmic);
+  }
+  :global(.suite__carte:hover) .suite__go { letter-spacing: 0.24em; }
+
+  /* ---------- Techniques ---------- */
+  .techs {
+    display: grid;
+    gap: 0 3rem;
+    list-style: none;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 60rem) { .techs { grid-template-columns: repeat(2, 1fr); } }
+  :global(.tech) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1.1rem;
+    padding: 1.15rem 0;
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+  }
+  .tech__n { font-family: var(--font-mono); font-size: 0.7rem; color: var(--cr-deep); padding-top: 0.25rem; }
+  :global(.tech) h3 { font-size: var(--step-0); font-weight: 500; color: var(--color-ink-100); font-family: var(--font-sans); }
+  :global(.tech) p { color: var(--color-ink-500); font-size: 0.9rem; margin-top: 0.2rem; }
+  .tech__ou {
+    grid-column: 2;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cr-sap);
+  }
+</style>
+
+<script>
+  const TEXTES: Record<string, [string, string, string]> = {
+    repos: ['vierge', 'Repos', 'Rien ne vit encore : les anneaux sont immobiles, seul le cœur respire. Défilez, ou cliquez.'],
+    derive: ['seve', 'Dérive', 'Un système vit : les anneaux dérivent à 3° par seconde.'],
+    vol: ['vrille', 'En vol', 'Vos gestes nourrissent le tourbillon ; l’énergie retombe de moitié toutes les 1,6 s.'],
+  };
+
+  document.addEventListener('astro:page-load', () => {
+    const oeil = document.getElementById('oeil');
+    const etat = document.querySelector<HTMLElement>('[data-etat]');
+    if (!oeil || !etat) return;
+    const pastille = etat.querySelector<HTMLElement>('.pastille')!;
+    const texte = etat.querySelector<HTMLElement>('[data-etat-texte]')!;
+    oeil.addEventListener('vortex:state', (e) => {
+      const { regime, alive } = (e as CustomEvent).detail as { regime: string; alive: number };
+      const [sens, nom, phrase] = TEXTES[regime] ?? TEXTES.repos;
+      pastille.dataset.sens = sens;
+      pastille.textContent = nom;
+      texte.textContent =
+        regime === 'derive'
+          ? `${alive} orbe${alive > 1 ? 's' : ''} sur 3 allumé${alive > 1 ? 's' : ''} — ${alive > 1 ? 'des pages vues' : 'une page vue'} : les anneaux dérivent à 3° par seconde.`
+          : phrase;
+    });
+  });
+</script>

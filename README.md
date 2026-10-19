@@ -106,16 +106,44 @@ moins sur le chemin critique, et pas de transfert d'IP vers un tiers à déclare
 
 ```
 src/
-├─ components/     Cosmos (shader), Portal (3D), Nav, Footer, cartes, Reveal
+├─ components/     Cosmos (shader), Portal (3D), Vortex (l'œil d'ORT), Eclat,
+│                  Fluidite (Ctrl+Maj+F), Nav, Footer, cartes, Reveal
+├─ data/           cristal.ts — instantané des géodes et du chemin de la Graine
+├─ lib/            motion.ts — l'horloge des mouvements (trois régimes, une boucle)
 ├─ content/
 │  ├─ logiciels/   1 fichier .md = 1 fiche logiciel
 │  └─ tutoriels/   1 fichier .mdx = 1 tutoriel
-├─ layouts/        Base.astro (SEO, fontes, fond, nav, pied de page)
+├─ layouts/        Base.astro (SEO, fontes, fond, nav, pied de page, dialecte)
+│                  Cristal.astro (pages du dialecte cristal)
 ├─ pages/          Routes ; [...slug].astro génère les pages de contenu
 ├─ styles/         global.css — tokens, base, composants, prose
+│                  cristal.css — le dialecte de la Graine et de Géode
 ├─ consts.ts       Nom du site, navigation, liens. Point de réglage unique.
 └─ content.config.ts  Schémas Zod des collections
 ```
+
+---
+
+## Le dialecte cristal (`/cristal`)
+
+Quatre pages dans la matière de la Graine et de Géode : même grammaire que le
+site, autre matière (Atelier, DESIGN.md § 9 ter).
+
+- **Mécanique** : `<Base dialect="cristal">` pose `data-dialect="cristal"` sur
+  `<html>` ; `styles/cristal.css` redéfinit les jetons. Dans ce dialecte,
+  l'échelle `--color-gold-*` porte le **cristal** (elle désigne le rôle de
+  protagoniste, pas une teinte). Le fond WebGL lit l'attribut et change de palette.
+- **Formes** : `.prisme` / `.facette` (hexagones allongés), `.pastille`,
+  `<Eclat>` (carte taillée), cellules hexagonales en SVG.
+- **Mouvement** : tout passe par `lib/motion.ts` (respiration 7 i/s, dérive 12,
+  événement 60, arrêt quand tout est posé). Le moniteur s'ouvre par Ctrl+Maj+F.
+- **Données** : `data/cristal.ts` est une copie des géodes réelles et du chemin
+  de la Graine, à rafraîchir à la main. La progression montrée sur la géode est
+  un exemple, déclaré comme tel sur la page.
+
+Mesuré le 19 octobre 2026 sur le build de production : 164 i/s (rafraîchissement
+de l'écran), p95 6,2 ms, aucun gel, y compris tourbillon en vol et appels en
+continu ; 10 à 16 ko de JS compressé par page, sans three.js ni React.
 
 ---
 

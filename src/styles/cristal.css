@@ -1,0 +1,418 @@
+/* ============================================================================
+   DIALECTE CRISTAL — la matière de la Graine et de Géode, sur la grammaire
+   de la Vitrine (Atelier, DESIGN.md § 9 ter).
+
+   On garde la grammaire : une source lumineuse basse avec un bord, un seul
+   protagoniste en dégradé, des contrepoints rares qui portent un sens, des
+   encres neutres et froides, le grain, la courbe « cosmic ».
+   On change la matière : le protagoniste devient le CRISTAL glacé, le vide
+   tire sur le violet (le ciel de la vallée), la source devient la SÈVE.
+
+   Mécanique : une page pose `data-dialect="cristal"` sur <html> (Base.astro).
+   Le bloc ci-dessous redéfinit les jetons — et tout ce qui les consomme
+   (navigation, pied de page, boutons, filets, fond WebGL) change de matière
+   sans qu'un seul composant le sache.
+
+   ⚠️ Convention à connaître : dans ce dialecte, l'échelle `--color-gold-*`
+   porte le CRISTAL. Elle désigne un rôle (le protagoniste), pas une teinte ;
+   renommer l'échelle dans tout le site aurait coûté un diff illisible pour
+   un gain nul. Les nouvelles pages emploient les alias `--cr-*` plus bas.
+
+   Sens fixes, partout dans le dialecte (une couleur ne change jamais de sens) :
+     CRISTAL   ce qui compte et ce qui existe : titres, action principale
+     SÈVE      ce qui vit et répond : un système qui tourne, une étape faite
+     VRILLE    ce qui relie : références, appels qui circulent
+     NÉBULEUSE ce qui appartient : composants, fonds
+     BRAISE    la dérive, le destructif, l'échec
+   ========================================================================= */
+
+/* Les contrepoints propres au dialecte, disponibles partout (ils ne
+   remplacent rien) : on peut citer la sève ou la vrille sur une page dorée. */
+:root {
+  --color-sap-200: #f4ffb0;
+  --color-sap-300: #e2ff8a;
+  --color-sap-500: #c4f24a;
+  --color-sap-700: #7db021;
+  --color-tendril-300: #f78bcb;
+  --color-tendril-500: #f052b0;
+  --color-tendril-700: #a82a7e;
+}
+
+/* Valeurs reprises telles quelles de Graine/src/Graine.App/Themes/Cristal.xaml. */
+[data-dialect='cristal'] {
+  /* --- Le vide, violet --- */
+  --color-void: #07050f;
+  --color-abyss: #0b0817;
+  --color-deep: #110d21;
+  --color-hull: #16122b;
+
+  /* --- Les surfaces (la « coque » devient la roche de la vallée) --- */
+  --color-slate-900: #16122b;
+  --color-slate-700: #262046;
+  --color-slate-500: #3a3260;
+  --color-slate-300: #6d6890;
+
+  /* --- Le protagoniste : le cristal, glace en haut, bleu profond en bas --- */
+  --color-gold-50: #f5fdff;
+  --color-gold-100: #e8fbff;
+  --color-gold-200: #cdf5ff;
+  --color-gold-300: #a6eeff;
+  --color-gold-400: #7fe0fa;
+  --color-gold-500: #4fd0f5;
+  --color-gold-600: #3594da;
+  --color-gold-700: #2389d0;
+  --color-gold-800: #173f7e;
+  --color-gold-900: #0d2240;
+
+  /* --- Le contrepoint « vivant » de la Vitrine (plasma) devient la sève --- */
+  --color-plasma-300: #e2ff8a;
+  --color-plasma-400: #c4f24a;
+  --color-plasma-600: #7db021;
+  --color-plasma-800: #3d5a10;
+
+  --color-nebula-300: #b9a2f7;
+  --color-nebula-500: #9067f0;
+  --color-nebula-700: #5b33b8;
+  --color-nebula-900: #2a1a5e;
+
+  --color-ember-300: #f7a774;
+  --color-ember-500: #f2793a;
+  --color-ember-700: #b8481a;
+  --color-ember-900: #6b2410;
+  --color-blood-500: #e84a5f;
+
+  /* --- Encres : neutres et froides, un rien lavande --- */
+  --color-ink-100: #ecebf4;
+  --color-ink-300: #a9a8c0;
+  --color-ink-500: #807e99;
+
+  /* --- Alias explicites pour les pages du dialecte --- */
+  --cr-light: #e8fbff;
+  --cr-bright: #a6eeff;
+  --cr: #4fd0f5;
+  --cr-deep: #2389d0;
+  --cr-shadow: #173f7e;
+  --cr-faint: #112441;
+  --cr-sap: #c4f24a;
+  --cr-sap-bright: #e2ff8a;
+  --cr-tendril: #f052b0;
+  --cr-tendril-light: #f78bcb;
+  --cr-nebula: #9067f0;
+  --cr-ember: #f2793a;
+  --cr-alert: #e84a5f;
+  --cr-ink-faint: #4c4a62;
+  --cr-surface: #16122b;
+  --cr-surface-raised: #1d1838;
+  --cr-surface-hover: #262046;
+  --cr-border: rgb(255 255 255 / 0.12);
+  --cr-border-strong: rgb(79 208 245 / 0.3);
+
+  /* Courbe du sixième de tour d'une facette survolée : très décélérée,
+     l'hexagone retombe exactement sur sa forme (HexNode.cs). */
+  --ease-facet: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Le cristal utile n'est jamais posé à plat : glace en haut, bleu profond en
+   bas (CrystalInkBrush). Le dégradé doré de la Vitrine était oblique ; celui-ci
+   est vertical, comme une aiguille de glace éclairée par-dessus. */
+[data-dialect='cristal'] .gilded {
+  background: linear-gradient(180deg, #f5fdff 0%, #9be9ff 45%, #3594da 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+[data-dialect='cristal'] ::selection {
+  background: rgb(79 208 245 / 0.32);
+  color: #f5fdff;
+}
+
+/* ============================================================================
+   LES BOUTONS DEVIENNENT DES FACETTES — hexagone allongé (HexPlate.cs)
+   « Plus de rectangle arrondi. » La pointe garde une largeur constante
+   (≈ 29 % de la hauteur) quelle que soit la longueur du libellé : d'où un
+   polygone en calc(), pas une image étirée.
+
+   Construction en couches, parce que `clip-path` rognerait l'ombre :
+   l'élément lui-même n'est PAS découpé ; il porte `filter: drop-shadow`,
+   qui suit l'alpha de ce qu'il peint — donc la forme hexagonale de ses
+   pseudo-éléments. La lueur épouse la facette au lieu d'un rectangle.
+   ========================================================================= */
+/* ⚠️ `--hex` cite `--tip` : il DOIT être défini sur l'élément qui porte
+   `--tip`. Une variable qui en cite une autre se résout là où elle est
+   définie ; posée sur <html>, où `--tip` n'existe pas, elle deviendrait
+   invalide et `clip-path` retomberait à `none` (vécu : boutons rectangulaires). */
+[data-dialect='cristal'] .btn-gold,
+[data-dialect='cristal'] .prisme,
+[data-dialect='cristal'] .btn-ghost,
+[data-dialect='cristal'] .facette {
+  --hex: polygon(
+    var(--tip) 0,
+    calc(100% - var(--tip)) 0,
+    100% 50%,
+    calc(100% - var(--tip)) 100%,
+    var(--tip) 100%,
+    0 50%
+  );
+}
+
+/* Pas de `display` ici : ces règles changent la MATIÈRE, pas la mise en page.
+   Redéclaré, `inline-flex` l'emportait sur le `display: none` de la barre et
+   faisait réapparaître « Me contacter » sur mobile (vécu). */
+[data-dialect='cristal'] .prisme,
+[data-dialect='cristal'] .facette { display: inline-flex; }
+
+[data-dialect='cristal'] .btn-gold,
+[data-dialect='cristal'] .prisme {
+  --tip: 0.95em;
+  position: relative;
+  isolation: isolate;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 2.1rem;
+  border-radius: 0;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+  color: #071a33;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  filter: drop-shadow(0 10px 22px rgb(79 208 245 / 0.32));
+  transition: transform 0.4s var(--ease-cosmic), filter 0.4s var(--ease-cosmic);
+}
+/* La plaque : le prisme (PrismBarBrush). */
+[data-dialect='cristal'] .btn-gold::before,
+[data-dialect='cristal'] .prisme::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: var(--hex);
+  background: linear-gradient(135deg, #f2fdff 0%, #a6eeff 40%, #4fc4ee 75%, #3a86d8 100%);
+}
+/* Le reflet spéculaire, découpé par la même facette. */
+[data-dialect='cristal'] .btn-gold::after,
+[data-dialect='cristal'] .prisme::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: var(--hex);
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.7) 45%,
+    transparent 60%
+  )
+    no-repeat;
+  background-size: 260% 100%;
+  background-position: 160% 0;
+  transform: none;
+  width: auto;
+  inset-block: 0;
+  left: 0;
+  transition: background-position 0.9s var(--ease-cosmic);
+}
+[data-dialect='cristal'] .btn-gold:hover,
+[data-dialect='cristal'] .prisme:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 14px 28px rgb(79 208 245 / 0.5));
+}
+[data-dialect='cristal'] .btn-gold:hover::after,
+[data-dialect='cristal'] .prisme:hover::after {
+  animation: none;
+  background-position: -60% 0;
+}
+
+/* Le verre gravé devient une facette creuse : un filet (la plaque du
+   dessous) et une face translucide posée 1 px à l'intérieur. */
+[data-dialect='cristal'] .btn-ghost,
+[data-dialect='cristal'] .facette {
+  --tip: 0.95em;
+  position: relative;
+  isolation: isolate;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 2.1rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  color: var(--color-ink-100);
+  transition: transform 0.35s var(--ease-cosmic), color 0.35s;
+}
+[data-dialect='cristal'] .btn-ghost::before,
+[data-dialect='cristal'] .facette::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  clip-path: var(--hex);
+  background: linear-gradient(90deg, rgb(79 208 245 / 0.25), rgb(232 251 255 / 0.55) 50%, rgb(79 208 245 / 0.25));
+  transition: background 0.35s;
+}
+[data-dialect='cristal'] .btn-ghost::after,
+[data-dialect='cristal'] .facette::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  clip-path: var(--hex);
+  background: linear-gradient(180deg, rgb(29 24 56 / 0.92), rgb(11 8 23 / 0.92));
+}
+[data-dialect='cristal'] .btn-ghost:hover,
+[data-dialect='cristal'] .facette:hover {
+  transform: translateY(-2px);
+  color: var(--cr-light);
+}
+[data-dialect='cristal'] .btn-ghost:hover::before,
+[data-dialect='cristal'] .facette:hover::before {
+  background: linear-gradient(90deg, rgb(79 208 245 / 0.55), rgb(232 251 255 / 0.95) 50%, rgb(79 208 245 / 0.55));
+}
+
+/* Les liens de navigation actifs se soulignent en cristal : déjà fait par
+   les jetons. Le bouton de la barre garde une taille compacte. */
+[data-dialect='cristal'] .nav__cta {
+  padding: 0.6rem 1.6rem;
+  --tip: 0.8em;
+}
+
+/* ============================================================================
+   L'ÉCLAT — une carte taillée (FacetCard.cs)
+   Deux coins opposés coupés (haut-gauche, bas-droite), les deux autres à
+   peine émoussés ; l'arête haute prend la lumière depuis la coupe et s'éteint
+   vers la droite. Le filet est la plaque du dessous qui dépasse d'un pixel.
+   ========================================================================= */
+.eclat {
+  --cut: 14px;
+  --soft: 3px;
+  --eclat-stroke: rgb(255 255 255 / 0.13);
+  --eclat-fill: linear-gradient(180deg, rgb(30 24 56 / 0.94), rgb(17 13 33 / 0.94));
+  --eclat-shape: polygon(
+    0 var(--cut),
+    var(--cut) 0,
+    calc(100% - var(--soft)) 0,
+    100% var(--soft),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--soft) 100%,
+    0 calc(100% - var(--soft))
+  );
+  position: relative;
+  isolation: isolate;
+  filter: drop-shadow(0 22px 40px rgb(0 0 0 / 0.55));
+  transition: transform 0.55s var(--ease-cosmic), filter 0.55s var(--ease-cosmic);
+}
+.eclat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  clip-path: var(--eclat-shape);
+  background: var(--eclat-stroke);
+  transition: background 0.45s var(--ease-cosmic);
+}
+.eclat::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  clip-path: var(--eclat-shape);
+  background: var(--eclat-fill);
+}
+/* L'arête : posée par Eclat.astro en SVG, aux coordonnées exactes. */
+.eclat__edge {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.45s var(--ease-cosmic);
+}
+.eclat[data-interactive]:hover,
+.eclat[data-interactive]:focus-within {
+  --eclat-stroke: rgb(79 208 245 / 0.55);
+  transform: translateY(-3px);
+  filter: drop-shadow(0 26px 46px rgb(35 137 208 / 0.35));
+}
+.eclat[data-interactive]:hover .eclat__edge,
+.eclat[data-interactive]:focus-within .eclat__edge {
+  opacity: 1;
+}
+
+/* ============================================================================
+   PASTILLE — un petit hexagone allongé dont la couleur est un SENS.
+   ========================================================================= */
+.pastille {
+  --tip: 0.55em;
+  --sens: var(--cr);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.28em 0.95em;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--sens) 80%, white);
+}
+.pastille::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(
+    var(--tip) 0, calc(100% - var(--tip)) 0, 100% 50%,
+    calc(100% - var(--tip)) 100%, var(--tip) 100%, 0 50%
+  );
+  background: color-mix(in oklab, var(--sens) 16%, transparent);
+}
+[data-sens='cristal'] { --sens: #4fd0f5; }
+[data-sens='seve'] { --sens: #c4f24a; }
+[data-sens='vrille'] { --sens: #f052b0; }
+[data-sens='nebuleuse'] { --sens: #9067f0; }
+[data-sens='braise'] { --sens: #f2793a; }
+[data-sens='vierge'] { --sens: #807e99; }
+
+/* L'étiquette d'atelier, en cristal profond. */
+.cr-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-ink-500);
+}
+.cr-label strong {
+  color: var(--cr-bright, #a6eeff);
+  font-weight: 500;
+}
+
+/* Le filet de la famille, devenu glace : il prend la lumière au centre. */
+.cr-hairline {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(79 208 245 / 0),
+    rgb(79 208 245 / 0.4) 35%,
+    rgb(232 251 255 / 0.8) 50%,
+    rgb(79 208 245 / 0.4) 65%,
+    rgb(79 208 245 / 0)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eclat,
+  [data-dialect='cristal'] .btn-gold,
+  [data-dialect='cristal'] .btn-ghost,
+  [data-dialect='cristal'] .prisme,
+  [data-dialect='cristal'] .facette {
+    transition: none;
+  }
+}

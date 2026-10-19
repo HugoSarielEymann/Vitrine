@@ -1,0 +1,50 @@
+---
+/**
+ * Éclat — la carte du dialecte cristal (Graine/Controls/FacetCard.cs).
+ *
+ * Deux coins opposés coupés, les deux autres à peine émoussés ; la forme et le
+ * filet viennent de `.eclat` (styles/cristal.css). Ce composant ajoute ce que
+ * le CSS ne sait pas dessiner exactement : l'ARÊTE qui prend la lumière depuis
+ * la coupe — un trait qui descend de 6 px sur le flanc, remonte la coupe, puis
+ * court sur le haut en s'éteignant vers la droite.
+ */
+interface Props {
+  as?: string;
+  href?: string;
+  /** Coupe des deux grands coins, en pixels (12 dans la Graine). */
+  cut?: number;
+  /** Survolable : le filet et l'arête s'allument. */
+  interactive?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { as, href, cut = 14, interactive = false, class: className, ...rest } = Astro.props;
+const Tag = (as ?? (href ? 'a' : 'div')) as any;
+const run = 220;
+const gid = `eclat-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<Tag
+  class:list={['eclat', className]}
+  href={href}
+  data-interactive={interactive || href ? '' : undefined}
+  style={`--cut:${cut}px`}
+  {...rest}
+>
+  <svg class="eclat__edge" aria-hidden="true">
+    <defs>
+      <linearGradient id={gid} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={cut + run} y2="0">
+        <stop offset="0" stop-color="#e8fbff" stop-opacity="0.8"></stop>
+        <stop offset="0.35" stop-color="#4fd0f5" stop-opacity="0.6"></stop>
+        <stop offset="1" stop-color="#4fd0f5" stop-opacity="0"></stop>
+      </linearGradient>
+    </defs>
+    <path
+      d={`M0.5 ${cut + 6} L0.5 ${cut} L${cut} 0.5 L${cut + run} 0.5`}
+      fill="none"
+      stroke={`url(#${gid})`}
+      stroke-width="1.2"></path>
+  </svg>
+  <slot />
+</Tag>

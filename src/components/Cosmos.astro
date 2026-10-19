@@ -51,6 +51,16 @@ const { intensity = 1 } = Astro.props;
       var(--color-void);
   }
 
+  /* Repli du dialecte cristal : la sève en bas à gauche, le tourbillon
+     magenta très loin en haut à droite, le vide violet. */
+  :global([data-dialect='cristal']) .cosmos {
+    background:
+      radial-gradient(70% 75% at 16% 104%, rgb(196 242 74 / 0.16) 0%, rgb(160 208 58 / 0.06) 28%, transparent 55%),
+      radial-gradient(62% 62% at 84% 12%, rgb(240 82 176 / 0.16) 0%, rgb(144 103 240 / 0.08) 38%, transparent 70%),
+      radial-gradient(50% 50% at 60% 74%, rgb(79 208 245 / 0.07) 0%, transparent 60%),
+      linear-gradient(225deg, #07050f 0%, #0a0716 35%, #0e0a1d 62%, #140f26 85%, #1b1530 100%);
+  }
+
   .cosmos__canvas {
     width: 100%;
     height: 100%;
@@ -83,6 +93,21 @@ const { intensity = 1 } = Astro.props;
     uniform vec2  uPointer;
     uniform float uScroll;
     uniform float uIntensity;
+
+    // Palette du dialecte (posée une fois au démarrage, voir PALETTES).
+    uniform vec3  uNebA;      // fond de la nébuleuse
+    uniform vec3  uNebB;      // seconde teinte de la nébuleuse
+    uniform vec3  uNebC;      // reflet de la source dans la nébuleuse
+    uniform vec2  uSun;       // position de la source, en uv (0..1, y vers le haut)
+    uniform vec2  uSunSquash; // aplatissement de sa retombée
+    uniform vec3  uSunCol;    // nappe
+    uniform vec3  uSunCore;   // cœur serré
+    uniform vec2  uSunGain;   // intensités nappe / cœur
+    uniform vec3  uAuxPos[2]; // deux lueurs secondaires : xy en uv, z = décroissance
+    uniform vec3  uAuxCol[2]; // leur couleur, déjà multipliée par leur intensité
+    uniform vec3  uStar;      // teinte des étoiles
+    uniform vec3  uFloor;     // plancher du vide (jamais du noir pur)
+    uniform float uGround;    // sol glacé au ras du bas (dialecte cristal)
 
     // --- Bruit ------------------------------------------------------------
     float hash21(vec2 p) {
@@ -151,12 +176,8 @@ const { intensity = 1 } = Astro.props;
       float n2 = fbm(np * 1.8 + n1 * 1.2 - vec2(t * 0.011, 0.0));
       float mask = smoothstep(0.28, 0.95, n2);
 
-      vec3 violet = vec3(0.170, 0.075, 0.330);
-      vec3 azure  = vec3(0.045, 0.105, 0.280);
-      vec3 amber  = vec3(0.520, 0.330, 0.085);
-
-      vec3 col = mix(azure, violet, smoothstep(0.15, 0.85, n1));
-      col = mix(col, amber, pow(mask, 2.2) * 0.32);
+      vec3 col = mix(uNebA, uNebB, smoothstep(0.15, 0.85, n1));
+      col = mix(col, uNebC, pow(mask, 2.2) * 0.32);
       col *= mask * 0.85;
 
       // --- Source de lumière dorée, en bas ---
@@ -167,12 +188,19 @@ const { intensity = 1 } = Astro.props;
       // Une retombée trop lente ne se lit plus comme une source lumineuse :
       // elle devient un filtre doré posé sur tout l'écran, qui fait jaunir
       // le contenu par-dessus. Une source doit avoir un bord.
-      vec2 sun = vec2(0.0, -0.78 + uScroll * 0.22);
-      float sd = length((p - sun) * vec2(0.68, 1.0));
+      vec2 sun = (uSun + vec2(0.0, uScroll * 0.22) - 0.5) * vec2(aspect, 1.0);
+      float sd = length((p - sun) * uSunSquash);
       float glow = exp(-sd * 3.1);
-      col += vec3(0.95, 0.66, 0.24) * glow * 0.46;
+      col += uSunCol * glow * uSunGain.x;
       // Cœur serré : c'est lui qui porte l'intensité, pas la nappe large.
-      col += vec3(1.0, 0.86, 0.55) * exp(-sd * 6.5) * 0.30;
+      col += uSunCore * exp(-sd * 6.5) * uSunGain.y;
+
+      // Lueurs secondaires (cristal : le tourbillon lointain en haut à droite,
+      // la lueur glacée au sol). Éteintes dans le dialecte doré.
+      for (int i = 0; i < 2; i++) {
+        vec2 ap = (uAuxPos[i].xy - 0.5) * vec2(aspect, 1.0);
+        col += uAuxCol[i] * exp(-length(p - ap) * uAuxPos[i].z);
+      }
 
       // --- Étoiles, trois profondeurs ---
       vec2 su = p + par * 0.35;
@@ -182,14 +210,17 @@ const { intensity = 1 } = Astro.props;
       s += starLayer(su * 2.30, 26.0, t, 21.9) * 0.36;
       // Les étoiles s'effacent dans le halo : rien ne brille dans un soleil.
       s *= 1.0 - clamp(glow * 1.5, 0.0, 0.9);
-      col += vec3(0.92, 0.94, 1.0) * s * 0.85;
+      col += uStar * s * 0.85;
+
+      // Le sol de la vallée : une bande glacée très pâle au ras du bas.
+      col += vec3(0.725, 0.765, 0.902) * smoothstep(0.86, 1.0, 1.0 - uv.y) * uGround;
 
       // --- Vignette ---
       float vig = 1.0 - smoothstep(0.45, 1.25, length(p * vec2(0.85, 1.0)));
       col *= mix(0.35, 1.0, vig);
 
       // Plancher très sombre mais jamais noir pur : garde de la matière.
-      col = max(col, vec3(0.016, 0.021, 0.043));
+      col = max(col, uFloor);
       col *= uIntensity;
 
       // Dithering : casse le banding sur les larges dégradés sombres.
@@ -197,6 +228,45 @@ const { intensity = 1 } = Astro.props;
       gl_FragColor = vec4(col + dither, 1.0);
     }
   `;
+
+  type Vec3 = [number, number, number];
+  interface Palette {
+    nebA: Vec3; nebB: Vec3; nebC: Vec3;
+    sun: [number, number]; squash: [number, number];
+    sunCol: Vec3; sunCore: Vec3; sunGain: [number, number];
+    aux: [number, number, number, number, number, number];
+    auxCol: [number, number, number, number, number, number];
+    star: Vec3; floor: Vec3; ground: number;
+    /** Cadence plafond quand rien ne bouge (0 : aucune limite). */
+    calmFps: number;
+  }
+
+  // Une palette par dialecte. La composition (une source, une retombée qui a
+  // un bord, une vignette) ne change pas : seule la matière change.
+  const PALETTES: Record<string, Palette> = {
+    cosmos: {
+      nebA: [0.045, 0.105, 0.28], nebB: [0.17, 0.075, 0.33], nebC: [0.52, 0.33, 0.085],
+      sun: [0.5, -0.28], squash: [0.68, 1.0],
+      sunCol: [0.95, 0.66, 0.24], sunCore: [1.0, 0.86, 0.55], sunGain: [0.46, 0.3],
+      aux: [0, 0, 99, 0, 0, 99], auxCol: [0, 0, 0, 0, 0, 0],
+      star: [0.92, 0.94, 1.0], floor: [0.016, 0.021, 0.043], ground: 0,
+      calmFps: 0,
+    },
+    // Graine/Themes/Cristal.xaml : SeedGlowBrush (0.16, 1.04 → uv 0.16, -0.04),
+    // VortexGlowBrush (0.84, 0.12 → uv 0.84, 0.88), CrystalGlowBrush (0.6, 0.74).
+    cristal: {
+      nebA: [0.05, 0.03, 0.13], nebB: [0.2, 0.06, 0.3], nebC: [0.1, 0.38, 0.52],
+      sun: [0.16, -0.06], squash: [0.62, 0.9],
+      sunCol: [0.62, 0.86, 0.2], sunCore: [0.89, 1.0, 0.54], sunGain: [0.22, 0.1],
+      aux: [0.84, 0.9, 1.7, 0.6, 0.26, 2.6],
+      auxCol: [0.17, 0.05, 0.13, 0.03, 0.09, 0.13],
+      star: [0.93, 0.92, 0.97], floor: [0.027, 0.02, 0.059], ground: 0.08,
+      // Le ciel de la Graine est calme : la nébuleuse dérive en une à deux
+      // minutes, rien n'y demande 60 images par seconde. 12 i/s au repos,
+      // pleine cadence seulement pendant que la parallaxe rattrape le pointeur.
+      calmFps: 12,
+    },
+  };
 
   function boot() {
     const host = document.querySelector<HTMLElement>('.cosmos');
@@ -255,6 +325,22 @@ const { intensity = 1 } = Astro.props;
 
     gl.uniform1f(uIntensity, Number(host.dataset.intensity ?? 1));
 
+    const palette = PALETTES[document.documentElement.dataset.dialect ?? 'cosmos'] ?? PALETTES.cosmos;
+    const u = (name: string) => gl.getUniformLocation(prog, name);
+    gl.uniform3fv(u('uNebA'), palette.nebA);
+    gl.uniform3fv(u('uNebB'), palette.nebB);
+    gl.uniform3fv(u('uNebC'), palette.nebC);
+    gl.uniform2fv(u('uSun'), palette.sun);
+    gl.uniform2fv(u('uSunSquash'), palette.squash);
+    gl.uniform3fv(u('uSunCol'), palette.sunCol);
+    gl.uniform3fv(u('uSunCore'), palette.sunCore);
+    gl.uniform2fv(u('uSunGain'), palette.sunGain);
+    gl.uniform3fv(u('uAuxPos'), palette.aux);
+    gl.uniform3fv(u('uAuxCol'), palette.auxCol);
+    gl.uniform3fv(u('uStar'), palette.star);
+    gl.uniform3fv(u('uFloor'), palette.floor);
+    gl.uniform1f(u('uGround'), palette.ground);
+
     // La nébuleuse est floue par nature : la rendre en pleine résolution
     // rétine ne se voit pas et quadruple le coût. 0.65× suffit.
     const SCALE = 0.65;
@@ -301,12 +387,24 @@ const { intensity = 1 } = Astro.props;
     let raf = 0;
     const start = performance.now();
 
+    let lastDraw = 0;
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       if (!running) return;
-      px += (tx - px) * 0.045;
-      py += (ty - py) * 0.045;
-      scroll += (tScroll - scroll) * 0.08;
+
+      // Lissage exprimé en temps, pas en images : à 12 i/s comme à 165, la
+      // parallaxe rattrape le pointeur à la même vitesse.
+      const dt = Math.min(0.1, (now - (lastDraw || now)) / 1000) || 1 / 60;
+      const settling =
+        Math.abs(tx - px) + Math.abs(ty - py) + Math.abs(tScroll - scroll) > 0.0015;
+      // Régime calme : tant que rien ne rattrape rien, on ne redessine qu'à la
+      // cadence plafond du dialecte. Le reste du temps, pleine cadence.
+      if (palette.calmFps > 0 && !settling && now - lastDraw < 1000 / palette.calmFps) return;
+      lastDraw = now;
+
+      px += (tx - px) * (1 - Math.pow(1 - 0.045, dt * 60));
+      py += (ty - py) * (1 - Math.pow(1 - 0.045, dt * 60));
+      scroll += (tScroll - scroll) * (1 - Math.pow(1 - 0.08, dt * 60));
       gl.uniform1f(uTime, (now - start) / 1000);
       gl.uniform2f(uPointer, px, -py);
       gl.uniform1f(uScroll, scroll);

@@ -1,0 +1,209 @@
+---
+/**
+ * Moniteur de fluidité — l'équivalent web du Ctrl+Maj+F de la Graine.
+ *
+ * La mesure tourne toujours (elle ne coûte presque rien) ; le panneau ne
+ * s'affiche qu'à la demande. Il dit, chiffres à l'appui :
+ *  - la cadence que la page DEMANDE et celle que l'horloge des mouvements OBTIENT ;
+ *  - ce que le navigateur compose réellement (images par seconde, temps par
+ *    image médian et 95e centile) — mesuré seulement panneau ouvert, pour que
+ *    la mesure ne fausse pas ce qu'elle mesure le reste du temps ;
+ *  - les gels : images longues de plus de 50 ms (Long Animation Frames, repli
+ *    sur Long Tasks), depuis l'ouverture de la page ;
+ *  - d'où vient le mouvement : chaque élément animé et sa cadence.
+ */
+---
+
+<aside class="flu" data-fluidite hidden aria-label="Moniteur de fluidité">
+  <header class="flu__head">
+    <span>Fluidité</span>
+    <kbd>Ctrl</kbd><kbd>Maj</kbd><kbd>F</kbd>
+  </header>
+  <dl class="flu__grid">
+    <div><dt>Demandé</dt><dd data-k="requested">—</dd></div>
+    <div><dt>Obtenu</dt><dd data-k="obtained">—</dd></div>
+    <div><dt>Navigateur</dt><dd data-k="fps">—</dd></div>
+    <div><dt>Image méd. · p95</dt><dd data-k="frame">—</dd></div>
+    <div><dt>Gels &gt; 50 ms</dt><dd data-k="jank">—</dd></div>
+    <div><dt>Pire image</dt><dd data-k="worst">—</dd></div>
+  </dl>
+  <p class="flu__label">D'où vient le mouvement</p>
+  <ul class="flu__demands" data-k="demands"></ul>
+  <p class="flu__note" data-k="note"></p>
+</aside>
+
+<style>
+  .flu {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 90;
+    width: min(20rem, calc(100vw - 2rem));
+    padding: 1rem 1.1rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-ink-300);
+    background: linear-gradient(180deg, rgb(29 24 56 / 0.95), rgb(11 8 23 / 0.96));
+    clip-path: polygon(0 12px, 12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+    box-shadow: inset 0 1px 0 rgb(232 251 255 / 0.25);
+  }
+  .flu[hidden] { display: none; }
+  .flu__head {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 0.64rem;
+    color: var(--cr-bright, #a6eeff);
+  }
+  .flu__head span { margin-right: auto; }
+  .flu kbd {
+    padding: 0.05rem 0.35rem;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    font-size: 0.6rem;
+    color: var(--color-ink-500);
+  }
+  .flu__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 1rem;
+  }
+  .flu dt {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .flu dd {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink-100);
+    font-size: 0.86rem;
+  }
+  .flu dd[data-bad] { color: var(--cr-ember, #f2793a); }
+  .flu__label {
+    margin-top: 0.85rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+  .flu__demands { list-style: none; margin-top: 0.3rem; display: grid; gap: 0.15rem; }
+  /* Ces lignes sont créées par le script : elles ne portent pas la marque de
+     portée d'Astro, d'où :global() — sinon elles restent sans style. */
+  .flu__demands :global(li) { display: flex; justify-content: space-between; gap: 1rem; }
+  .flu__demands :global(li span:last-child) { color: var(--cr-sap, #c4f24a); font-variant-numeric: tabular-nums; }
+  .flu__note { margin-top: 0.6rem; color: var(--color-ink-500); font-size: 0.64rem; line-height: 1.5; }
+</style>
+
+<script>
+  import { snapshot } from '../lib/motion';
+
+  // --- Mesure permanente des gels ---
+  let jank = 0;
+  let worst = 0;
+  let source = '';
+  const observe = (type: string) => {
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          if (e.duration > 50) jank++;
+          worst = Math.max(worst, e.duration);
+        }
+      }).observe({ type, buffered: true });
+      source = type;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (!observe('long-animation-frame')) observe('longtask');
+
+  let panel: HTMLElement | null = null;
+  let raf = 0;
+  let timer = 0;
+  const frames: number[] = [];
+  let last = 0;
+
+  const sample = (ts: number) => {
+    if (last) frames.push(ts - last);
+    if (frames.length > 240) frames.shift();
+    last = ts;
+    raf = requestAnimationFrame(sample);
+  };
+
+  const pct = (arr: number[], p: number) => {
+    if (!arr.length) return 0;
+    const s = [...arr].sort((a, b) => a - b);
+    return s[Math.min(s.length - 1, Math.floor(s.length * p))];
+  };
+
+  const render = () => {
+    if (!panel) return;
+    const set = (k: string, v: string, bad = false) => {
+      const el = panel!.querySelector<HTMLElement>(`[data-k="${k}"]`);
+      if (!el) return;
+      el.textContent = v;
+      el.toggleAttribute('data-bad', bad);
+    };
+    const snap = snapshot();
+    set('requested', snap.running ? `${snap.requested} i/s` : 'posé');
+    set('obtained', `${snap.obtained} i/s`, snap.running && snap.obtained < snap.requested * 0.8);
+    const recent = frames.slice(-120);
+    const med = pct(recent, 0.5);
+    const p95 = pct(recent, 0.95);
+    set('fps', med ? `${Math.round(1000 / med)} i/s` : '—');
+    set('frame', med ? `${med.toFixed(1)} · ${p95.toFixed(1)} ms` : '—', p95 > 33);
+    set('jank', source ? String(jank) : 'non mesuré', jank > 0);
+    set('worst', source ? (worst ? `${Math.round(worst)} ms` : 'aucune > 50 ms') : 'non mesuré', worst > 100);
+    const list = panel.querySelector('[data-k="demands"]')!;
+    list.innerHTML = '';
+    for (const d of snap.demands) {
+      const li = document.createElement('li');
+      li.innerHTML = `<span></span><span></span>`;
+      li.children[0].textContent = d.kind;
+      li.children[1].textContent = d.fps ? `${d.fps} i/s` : 'posé';
+      list.appendChild(li);
+    }
+    if (!snap.demands.length) list.innerHTML = '<li><span>Rien ne bouge sur cette page</span><span></span></li>';
+    set(
+      'note',
+      source === 'long-animation-frame'
+        ? 'Gels : API Long Animation Frames.'
+        : source
+          ? 'Gels : API Long Tasks (repli, moins précise).'
+          : 'Ce navigateur ne mesure pas les gels.',
+    );
+  };
+
+  const open = (show: boolean) => {
+    // On arrête d'abord l'échantillonnage : une page sans moniteur ne doit
+    // pas garder une boucle orpheline.
+    cancelAnimationFrame(raf);
+    clearInterval(timer);
+    if (!panel) return;
+    panel.hidden = !show;
+    if (show) {
+      frames.length = 0;
+      last = 0;
+      raf = requestAnimationFrame(sample);
+      timer = window.setInterval(render, 500);
+      render();
+    }
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+      e.preventDefault();
+      // `hidden` peut valoir "until-found" : on compare, on ne convertit pas.
+      open(panel?.hidden === true);
+    }
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    const wasOpen = panel ? !panel.hidden : false;
+    panel = document.querySelector<HTMLElement>('[data-fluidite]');
+    open(wasOpen);
+  });
+</script>

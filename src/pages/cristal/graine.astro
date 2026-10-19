@@ -1,0 +1,559 @@
+---
+import Cristal from '../../layouts/Cristal.astro';
+import Vortex from '../../components/Vortex.astro';
+import Eclat from '../../components/Eclat.astro';
+import Reveal from '../../components/Reveal.astro';
+import { GRAINE_ETAPES, TERRAINS } from '../../data/cristal';
+
+/* L'observatoire est dessiné dans un repère fixe de 1000 × 600 px, mis à
+   l'échelle d'un bloc par un seul `scale` (script plus bas). Ainsi les vrilles
+   SVG et les trajectoires CSS (`offset-path: path(...)`) parlent les mêmes
+   coordonnées, à toutes les tailles d'écran. */
+const W = 1000;
+const H = 600;
+const CX = 500;
+const CY = 275;
+const VORTEX = 420; // diamètre de l'œil, dans ce repère
+const RIM_X = VORTEX * 0.47;
+const RIM_Y = VORTEX * 0.47 * 0.62;
+
+const PLACES: Record<string, { x: number; y: number }> = {
+  poste: { x: 118, y: 120 },
+  preprod: { x: 882, y: 132 },
+  prod: { x: 500, y: 548 },
+};
+
+// Une vrille : du terrain jusqu'au bord de l'œil, en courbe douce.
+const vrilles = TERRAINS.map((t) => {
+  const p = PLACES[t.id];
+  const dx = p.x - CX;
+  const dy = p.y - CY;
+  const k = 1 / Math.sqrt((dx * dx) / (RIM_X * RIM_X) + (dy * dy) / (RIM_Y * RIM_Y));
+  const ex = CX + dx * k;
+  const ey = CY + dy * k;
+  // Point de contrôle décalé sur le côté : la vrille s'enroule, elle ne vise pas.
+  const mx = (p.x + ex) / 2 - dy * 0.18;
+  const my = (p.y + ey) / 2 + dx * 0.12;
+  return { ...t, ...p, d: `M${p.x} ${p.y} Q${mx.toFixed(1)} ${my.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}` };
+});
+
+const hex = (r: number) =>
+  Array.from({ length: 6 }, (_, k) => {
+    const a = ((-90 + 60 * k) * Math.PI) / 180;
+    return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`;
+  }).join(' ');
+---
+
+<Cristal
+  title="Le chemin d’un système — dialecte cristal"
+  description="La Graine : décrire un système, le semer sur un terrain, le piloter. Les huit étapes du chemin, puis l’observatoire où les appels filent le long des vrilles."
+  page="graine"
+>
+  <header class="shell tete">
+    <Reveal><p class="eyebrow">La Graine · décrire, semer, piloter</p></Reveal>
+    <Reveal delay={100}><h1>Le chemin <em class="gilded">d’un système</em></h1></Reveal>
+    <Reveal delay={200}>
+      <p class="tete__lead">
+        Une graine dit <strong>quoi</strong> : les entités, ce qui appartient à quoi, ce qui vise
+        quoi, les priorités. Son génome en déduit <strong>comment</strong>, et l’hôte de la Graine
+        sert le système tel quel — sans une ligne de code générée. Entre l’idée et le système qui
+        vit, huit étapes&nbsp;; défilez, elles s’allument.
+      </p>
+    </Reveal>
+  </header>
+
+  <!-- ============ LE CHEMIN ============ -->
+  <section class="shell chemin" aria-label="Les huit étapes du chemin">
+    <ol class="etapes">
+      {
+        GRAINE_ETAPES.map((e) => (
+          <li class="etape" data-n={e.n}>
+            <div class="etape__cellule" tabindex="0" aria-label={`Étape ${e.n} sur 8 : ${e.nom}`}>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <polygon class="etape__halo" points={hex(48)} />
+                <polygon class="etape__corps" points={hex(40)} />
+              </svg>
+              <span class="etape__glyph" aria-hidden="true">{e.glyph}</span>
+            </div>
+            <Eclat class="etape__carte">
+              <p class="cr-label">
+                Étape {e.n} sur 8{e.touche && <> · <strong>{e.touche}</strong></>}
+              </p>
+              <h2>{e.nom}</h2>
+              <p class="etape__fait">{e.fait}</p>
+            </Eclat>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="chemin__note cr-label">
+      Cellule <strong>faite</strong> : sève &nbsp;·&nbsp; <strong>à faire</strong> : cristal qui respire
+      &nbsp;·&nbsp; <strong>vivante</strong> : un cœur qui bat &nbsp;·&nbsp; survolée : elle tourne d’un
+      sixième de tour et retombe sur sa forme
+    </p>
+  </section>
+
+  <!-- ============ L'OBSERVATOIRE ============ -->
+  <section class="shell bande" id="observatoire">
+    <Reveal>
+      <p class="cr-label">Étape 8 · <strong>l’observatoire</strong></p>
+      <h2>Semez, puis <em class="gilded">regardez-le vivre</em></h2>
+      <p class="bande__lead">
+        Trois terrains, chacun avec son génome posé par-dessus celui de la graine. Semez&nbsp;: l’orbe
+        du terrain s’allume dans l’œil. Envoyez un appel&nbsp;: il file le long de la vrille et les
+        anneaux s’emballent. Vers un terrain où rien n’est semé, il échoue — en braise, à mi-chemin.
+      </p>
+    </Reveal>
+
+    <Reveal delay={100} class="obs">
+      <div class="obs__scene" data-scene style={`--w:${W}px;--h:${H}px`}>
+        <div class="obs__repere" data-repere>
+          <svg class="obs__vrilles" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+            {vrilles.map((v) => (
+              <path class="vrille" d={v.d} data-vrille={v.id} />
+            ))}
+          </svg>
+
+          <div class="obs__oeil" style={`left:${CX - VORTEX / 2}px;top:${CY - (VORTEX * 0.7) / 2}px;width:${VORTEX}px`}>
+            <Vortex
+              id="observatoire-oeil"
+              size={`${VORTEX}px`}
+              orbs={TERRAINS.map((t) => ({ key: t.id, label: t.nom }))}
+            />
+          </div>
+
+          {vrilles.map((v) => (
+            <div class="astre" data-astre={v.id} style={`left:${v.x}px;top:${v.y}px`}>
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <polygon class="astre__halo" points={hex(48)} />
+                <polygon class="astre__corps" points={hex(36)} />
+              </svg>
+            </div>
+          ))}
+
+          <div class="obs__appels" data-appels aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <ul class="terrains">
+        {
+          TERRAINS.map((t) => (
+            <li>
+              <Eclat class="terrain" data-terrain={t.id}>
+                <header class="terrain__tete">
+                  <h3>{t.nom}</h3>
+                  <span class="pastille" data-sens="vierge" data-etat-terrain>Rien n’est semé</span>
+                </header>
+                <p class="terrain__role">{t.role}</p>
+                <p class="terrain__genome">
+                  <span class="cr-label">Génome</span> {t.genome}
+                  {t.copies > 1 && ` · ${t.copies} copies`}
+                </p>
+                <p class="terrain__mesure" data-mesure aria-live="polite">Aucun appel encore.</p>
+                <div class="terrain__actions">
+                  <button type="button" class="prisme" data-semer>Semer</button>
+                  <button type="button" class="facette" data-appel>Envoyer un appel</button>
+                </div>
+              </Eclat>
+            </li>
+          ))
+        }
+      </ul>
+    </Reveal>
+  </section>
+</Cristal>
+
+<style>
+  .tete {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding-block: clamp(2.5rem, 7vw, 5rem) 1rem;
+  }
+  .tete h1 { font-size: var(--step-4); }
+  .tete h1 em { font-style: italic; }
+  .tete__lead { max-width: 62ch; font-size: var(--step-1); line-height: 1.6; color: var(--color-ink-300); }
+  .tete__lead strong { color: var(--cr-bright); font-weight: 500; }
+
+  /* ============ LE CHEMIN ============ */
+  .chemin { padding-block: 2rem 3rem; }
+  .etapes { list-style: none; display: grid; gap: 0; max-width: 54rem; }
+  .etape {
+    position: relative;
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 1.25rem;
+    align-items: center;
+    padding-block: 0.9rem;
+  }
+  /* Le lien entre deux cellules : un trait qui se remplit de sève. */
+  .etape:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: calc(2.75rem - 1px);
+    top: calc(50% + 2.4rem);
+    height: calc(100% - 4.8rem + 1.8rem);
+    width: 2px;
+    background: linear-gradient(var(--cr-sap), rgb(196 242 74 / 0.4));
+    transform-origin: top;
+  }
+  .etape:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: calc(2.75rem - 1px);
+    top: calc(50% + 2.4rem);
+    height: calc(100% - 4.8rem + 1.8rem);
+    width: 2px;
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .etape__cellule {
+    position: relative;
+    width: 5.5rem;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    outline: none;
+  }
+  .etape__cellule svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .etape__corps, .etape__halo {
+    transform-origin: 50px 50px;
+    transition: rotate 0.5s var(--ease-facet), opacity 0.3s;
+  }
+  /* État de repli (sans scroll-driven animations) : la cellule est faite. */
+  .etape__corps {
+    fill: rgb(196 242 74 / 0.16);
+    stroke: var(--cr-sap);
+    stroke-width: 2;
+  }
+  .etape__halo { fill: none; stroke: rgb(196 242 74 / 0.35); stroke-width: 1; opacity: 0; }
+  .etape__glyph {
+    position: relative;
+    font-size: 1.35rem;
+    color: var(--cr-sap-bright);
+    transition: rotate 0.5s var(--ease-facet);
+  }
+  /* Survolée, la facette tourne d'un sixième de tour (60°) : elle retombe
+     exactement sur sa forme, on la sent prise (HexNode.cs). */
+  .etape__cellule:hover .etape__corps,
+  .etape__cellule:focus-visible .etape__corps { rotate: 60deg; }
+  .etape__cellule:hover .etape__halo,
+  .etape__cellule:focus-visible .etape__halo { opacity: 1; rotate: 60deg; }
+  .etape__cellule:focus-visible .etape__corps { stroke: #e8fbff; }
+
+  :global(.etape__carte) { padding: 1.25rem 1.5rem; }
+  :global(.etape__carte) h2 { font-size: var(--step-2); margin-block: 0.35rem 0.4rem; }
+  .etape__fait { color: var(--color-ink-500); font-size: 0.94rem; }
+  .chemin__note { margin-top: 2rem; max-width: 70ch; line-height: 2; }
+
+  /* --- Scroll-driven animations : la cellule s'allume en traversant la vue.
+         Tout est déclaratif, rien n'écoute le défilement : le navigateur
+         pilote l'animation sur sa propre chronologie de vue. --- */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .etape__corps {
+        animation: cellule-allumer linear both;
+        animation-timeline: view();
+        animation-range: entry 30% cover 52%;
+      }
+      .etape__glyph {
+        animation: glyph-allumer linear both;
+        animation-timeline: view();
+        animation-range: entry 30% cover 52%;
+      }
+      :global(.etape__carte) {
+        animation: carte-allumer linear both;
+        animation-timeline: view();
+        animation-range: entry 10% cover 40%;
+      }
+      .etape:not(:last-child)::after {
+        animation: lien-remplir linear both;
+        animation-timeline: view();
+        animation-range: cover 45% cover 75%;
+      }
+    }
+  }
+  @keyframes cellule-allumer {
+    0% { fill: rgb(255 255 255 / 0.03); stroke: rgb(128 126 153 / 0.5); }
+    55% { fill: rgb(79 208 245 / 0.2); stroke: #4fd0f5; }
+    100% { fill: rgb(196 242 74 / 0.16); stroke: #c4f24a; }
+  }
+  @keyframes glyph-allumer {
+    0% { color: #4c4a62; }
+    55% { color: #a6eeff; }
+    100% { color: #e2ff8a; }
+  }
+  @keyframes carte-allumer {
+    from { opacity: 0.35; translate: 18px 0; }
+    to { opacity: 1; translate: 0 0; }
+  }
+  @keyframes lien-remplir {
+    from { scale: 1 0; }
+    to { scale: 1 1; }
+  }
+
+  /* La dernière étape est vivante : un cœur qui bat, une fois atteinte. */
+  .etape[data-n='8'] .etape__halo {
+    opacity: 1;
+    stroke: rgb(196 242 74 / 0.6);
+    animation: battre 2.4s var(--ease-gravity) infinite;
+  }
+  @keyframes battre {
+    0%, 70%, 100% { scale: 1; opacity: 0.25; }
+    15% { scale: 1.12; opacity: 0.9; }
+    30% { scale: 1.02; opacity: 0.5; }
+    42% { scale: 1.08; opacity: 0.75; }
+  }
+
+  /* ============ L'OBSERVATOIRE ============ */
+  .bande { padding-block: clamp(3.5rem, 8vw, 6rem); }
+  .bande h2 { font-size: var(--step-3); margin-block: 0.75rem 1rem; }
+  .bande h2 em { font-style: italic; }
+  .bande__lead { max-width: 64ch; color: var(--color-ink-500); margin-bottom: 2rem; }
+
+  .obs__scene {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1000 / 600;
+    max-width: 62rem;
+    margin-inline: auto;
+  }
+  /* Le repère fixe, mis à l'échelle d'un bloc (--k posé par le script). */
+  .obs__repere {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--w);
+    height: var(--h);
+    transform-origin: 0 0;
+    scale: var(--k, 0.6);
+  }
+  .obs__vrilles { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .vrille {
+    fill: none;
+    stroke: rgb(240 82 176 / 0.45);
+    stroke-width: 1.6;
+    stroke-dasharray: 2 7;
+    stroke-linecap: round;
+    transition: stroke 0.5s, stroke-width 0.5s;
+  }
+  /* Un terrain semé : sa vrille se tend (trait plus net, magenta plus vif). */
+  .vrille.is-tendue { stroke: rgb(247 139 203 / 0.95); stroke-width: 2.2; stroke-dasharray: none; }
+
+  .obs__oeil { position: absolute; }
+
+  .astre {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    translate: -50% -50%;
+  }
+  .astre svg { width: 100%; height: 100%; overflow: visible; }
+  .astre__corps {
+    fill: rgb(255 255 255 / 0.04);
+    stroke: rgb(128 126 153 / 0.6);
+    stroke-width: 2.5;
+    transition: fill 0.5s, stroke 0.5s;
+  }
+  .astre__halo { fill: none; stroke: rgb(196 242 74 / 0.5); stroke-width: 1.5; opacity: 0; transform-origin: 50px 50px; }
+  .astre.is-seme .astre__corps { fill: rgb(196 242 74 / 0.2); stroke: #c4f24a; }
+  .astre.is-bat .astre__halo { animation: astre-battre 0.9s var(--ease-cosmic); }
+  @keyframes astre-battre {
+    from { opacity: 0.95; scale: 0.9; }
+    to { opacity: 0; scale: 1.5; }
+  }
+
+  .obs__appels { position: absolute; inset: 0; pointer-events: none; }
+  /* Un appel : il file le long de sa vrille (offset-path), sève s'il est
+     servi, braise s'il échoue. La trajectoire est la vrille elle-même. */
+  :global(.appel) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f4ffb0, #c4f24a 55%, rgb(125 176 33 / 0));
+    box-shadow: 0 0 12px 3px rgb(196 242 74 / 0.55);
+    offset-rotate: 0deg;
+  }
+  :global(.appel.is-echec) {
+    background: radial-gradient(circle, #ffd3b8, #f2793a 55%, rgb(184 72 26 / 0));
+    box-shadow: 0 0 12px 3px rgb(242 121 58 / 0.6);
+  }
+
+  .terrains {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 60rem) { .terrains { grid-template-columns: repeat(3, 1fr); } }
+  .terrains > li { height: 100%; }
+  :global(.terrain) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.4rem 1.4rem 1.5rem;
+  }
+  .terrain__tete { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .terrain__tete h3 { font-size: var(--step-1); }
+  .terrain__role { color: var(--color-ink-500); font-size: 0.88rem; }
+  .terrain__genome { color: var(--color-ink-100); font-size: 0.9rem; }
+  .terrain__genome .cr-label { margin-right: 0.4rem; }
+  .terrain__mesure {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-ink-500);
+    font-variant-numeric: tabular-nums;
+    min-height: 2.6em;
+    flex: 1;
+  }
+  .terrain__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .terrain__actions button { font-size: 0.82rem; padding: 0.6rem 1.4rem; cursor: pointer; font-family: inherit; }
+  .terrain__actions .facette[disabled] { opacity: 0.45; cursor: not-allowed; }
+  /* « Arracher » : le même bouton, devenu destructif — il prend la braise. */
+  :global([data-dialect='cristal']) .terrain__actions .prisme.is-arracher::before {
+    background: linear-gradient(135deg, #ffd3b8, #f2793a 55%, #b8481a);
+  }
+  :global([data-dialect='cristal']) .terrain__actions .prisme.is-arracher {
+    filter: drop-shadow(0 10px 22px rgb(242 121 58 / 0.32));
+    color: #2a0d03;
+  }
+</style>
+
+<script>
+  import { join, leave, wake, EVENT, type Mover } from '../../lib/motion';
+
+  document.addEventListener('astro:page-load', () => {
+    const scene = document.querySelector<HTMLElement>('[data-scene]');
+    const repere = document.querySelector<HTMLElement>('[data-repere]');
+    const appels = document.querySelector<HTMLElement>('[data-appels]');
+    const oeil = document.getElementById('observatoire-oeil');
+    if (!scene || !repere || !appels || !oeil) return;
+
+    // --- Mise à l'échelle du repère fixe ---
+    const W = parseFloat(getComputedStyle(scene).getPropertyValue('--w')) || 1000;
+    const ro = new ResizeObserver(() => repere.style.setProperty('--k', String(scene.clientWidth / W)));
+    ro.observe(scene);
+
+    const ordre = ['poste', 'preprod', 'prod'];
+    const etat = new Map(ordre.map((id) => [id, { seme: false, servis: 0, echecs: 0 }]));
+
+    // Les appels en vol sont des événements : l'horloge commune le sait, et
+    // le moniteur de fluidité dit d'où vient le mouvement.
+    let enVol = 0;
+    const vigie: Mover = { kind: 'Appels en vol', advance: () => (enVol > 0 ? EVENT : 0) };
+    join(vigie);
+
+    const orbes = () =>
+      oeil.dispatchEvent(new CustomEvent('vortex:orbs', { detail: ordre.map((id) => etat.get(id)!.seme) }));
+
+    const peindre = (id: string) => {
+      const e = etat.get(id)!;
+      const carte = document.querySelector<HTMLElement>(`[data-terrain="${id}"]`)!;
+      const pastille = carte.querySelector<HTMLElement>('[data-etat-terrain]')!;
+      const mesure = carte.querySelector<HTMLElement>('[data-mesure]')!;
+      const semer = carte.querySelector<HTMLButtonElement>('[data-semer]')!;
+      pastille.dataset.sens = e.seme ? 'seve' : 'vierge';
+      pastille.textContent = e.seme ? 'Semé · vivant' : 'Rien n’est semé';
+      semer.textContent = e.seme ? 'Arracher' : 'Semer';
+      semer.classList.toggle('is-arracher', e.seme);
+      document.querySelector(`[data-astre="${id}"]`)!.classList.toggle('is-seme', e.seme);
+      document.querySelector(`[data-vrille="${id}"]`)!.classList.toggle('is-tendue', e.seme);
+      // Une mesure absente se nomme : jamais un « 0 » qui ferait croire à un compteur.
+      const total = e.servis + e.echecs;
+      mesure.textContent = total
+        ? `${e.servis} appel${e.servis > 1 ? 's' : ''} servi${e.servis > 1 ? 's' : ''} · ${e.echecs} échec${e.echecs > 1 ? 's' : ''}`
+        : e.seme
+          ? 'Semé. Aucun appel encore.'
+          : 'Aucun appel encore.';
+    };
+
+    const lancer = (id: string) => {
+      const e = etat.get(id)!;
+      const vrille = document.querySelector<SVGPathElement>(`[data-vrille="${id}"]`)!;
+      const point = document.createElement('span');
+      point.className = 'appel' + (e.seme ? '' : ' is-echec');
+      // La trajectoire EST la vrille : même chemin, mêmes coordonnées.
+      point.style.offsetPath = `path("${vrille.getAttribute('d')}")`;
+      appels.appendChild(point);
+      enVol++;
+      wake(vigie);
+
+      const reduit = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fin = () => {
+        point.remove();
+        enVol--;
+        if (e.seme) {
+          e.servis++;
+          oeil.dispatchEvent(new CustomEvent('vortex:kick', { detail: 1.4 }));
+          const astre = document.querySelector(`[data-astre="${id}"]`)!;
+          astre.classList.remove('is-bat');
+          void (astre as HTMLElement).offsetWidth;
+          astre.classList.add('is-bat');
+        } else {
+          e.echecs++;
+        }
+        peindre(id);
+      };
+      if (reduit) {
+        fin();
+        return;
+      }
+      const anim = e.seme
+        ? point.animate([{ offsetDistance: '0%' }, { offsetDistance: '100%' }], { duration: 1100, easing: 'cubic-bezier(0.55, 0, 0.35, 1)' })
+        : point.animate(
+            [
+              { offsetDistance: '0%', opacity: 1 },
+              { offsetDistance: '42%', opacity: 1, offset: 0.7 },
+              { offsetDistance: '48%', opacity: 0 },
+            ],
+            { duration: 1000, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
+          );
+      anim.finished.then(fin, fin);
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-terrain]').forEach((carte) => {
+      const id = carte.dataset.terrain!;
+      const bouton = carte.querySelector<HTMLButtonElement>('[data-semer]')!;
+      let confirmer = false;
+      bouton.addEventListener('click', () => {
+        const e = etat.get(id)!;
+        // Une action destructrice dit ses conséquences AVANT (Atelier, DESIGN § 10) :
+        // le premier clic sur « Arracher » explique, le second agit.
+        if (e.seme && !confirmer) {
+          confirmer = true;
+          bouton.textContent = 'Confirmer l’arrachage';
+          carte.querySelector<HTMLElement>('[data-mesure]')!.textContent =
+            'Arracher retire le système de ce terrain : son orbe s’éteint, et les appels suivants échoueront.';
+          return;
+        }
+        confirmer = false;
+        e.seme = !e.seme;
+        orbes();
+        peindre(id);
+      });
+      carte.addEventListener('pointerleave', () => {
+        if (!confirmer) return;
+        confirmer = false;
+        peindre(id);
+      });
+      carte.querySelector('[data-appel]')!.addEventListener('click', () => lancer(id));
+      peindre(id);
+    });
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        ro.disconnect();
+        leave(vigie);
+      },
+      { once: true },
+    );
+  });
+</script>

@@ -1,0 +1,708 @@
+---
+import Cristal from '../../layouts/Cristal.astro';
+import Eclat from '../../components/Eclat.astro';
+import Reveal from '../../components/Reveal.astro';
+
+/* Valeurs de Graine/src/Graine.App/Themes/Cristal.xaml (Atelier, DESIGN.md, annexe). */
+const JETONS = [
+  { groupe: 'Le vide', items: [
+    ['VoidDeep', '#07050F'], ['Void', '#0B0817'], ['VoidRaised', '#110D21'], ['Surface', '#16122B'], ['SurfaceRaised', '#1D1838'], ['SurfaceHover', '#262046'],
+  ] },
+  { groupe: 'Le cristal', items: [
+    ['CrystalLight', '#E8FBFF'], ['CrystalBright', '#A6EEFF'], ['Crystal', '#4FD0F5'], ['CrystalDeep', '#2389D0'], ['CrystalShadow', '#173F7E'], ['CrystalFaint', '#112441'],
+  ] },
+  { groupe: 'Les sens', items: [
+    ['Sap', '#C4F24A'], ['SapBright', '#E2FF8A'], ['Tendril', '#F052B0'], ['TendrilLight', '#F78BCB'], ['Nebula', '#9067F0'], ['Ember', '#F2793A'], ['Alert', '#E84A5F'],
+  ] },
+  { groupe: 'Les encres', items: [
+    ['InkPrimary', '#ECEBF4'], ['InkSecondary', '#A9A8C0'], ['InkMuted', '#807E99'], ['InkFaint', '#4C4A62'],
+  ] },
+] as const;
+
+const ETATS = [
+  { etat: 'faite', nom: 'Faite', dit: 'ce qu’elle produit existe' },
+  { etat: 'ouverte', nom: 'À faire', dit: 'le cristal respire' },
+  { etat: 'avenir', nom: 'À venir', dit: 'ce qui la précède n’est pas fait' },
+  { etat: 'bloquee', nom: 'Bloquée', dit: 'une erreur à corriger' },
+  { etat: 'vivante', nom: 'Vivante', dit: 'un cœur qui bat' },
+];
+
+const hex = (r: number) =>
+  Array.from({ length: 6 }, (_, k) => {
+    const a = ((-90 + 60 * k) * Math.PI) / 180;
+    return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`;
+  }).join(' ');
+---
+
+<Cristal
+  title="La matière — dialecte cristal"
+  description="Le spécimen du dialecte cristal : jetons, prisme, facettes, éclats, les trois régimes du mouvement sur une seule horloge, et le même composant dans les deux dialectes."
+  page="matiere"
+>
+  <header class="shell tete">
+    <Reveal><p class="eyebrow">Le spécimen · tout se touche</p></Reveal>
+    <Reveal delay={100}><h1>La <em class="gilded">matière</em></h1></Reveal>
+    <Reveal delay={200}>
+      <p class="tete__lead">
+        Les pièces dont sont faites la Graine et Géode, une à une. Chaque jeton se copie d’un clic,
+        chaque forme se survole, et le mouvement dit sa cadence pendant qu’il bouge.
+      </p>
+    </Reveal>
+  </header>
+
+  <!-- ============ JETONS ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Les jetons · <strong>cliquer pour copier</strong></p>
+      <h2>Vingt-trois couleurs, <em class="gilded">cinq rôles</em></h2>
+    </Reveal>
+    {
+      JETONS.map((g, gi) => (
+        <Reveal delay={gi * 60} class="jetons">
+          <h3 class="cr-label">{g.groupe}</h3>
+          <ul>
+            {g.items.map(([nom, val]) => (
+              <li>
+                <button type="button" class="jeton" data-copier={val} style={`--c:${val}`}>
+                  <span class="jeton__pastille" aria-hidden="true"></span>
+                  <span class="jeton__nom">{nom}</span>
+                  <span class="jeton__val">{val}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      ))
+    }
+    <Reveal class="encre">
+      <span class="encre__barre" aria-hidden="true"></span>
+      <div>
+        <p class="cr-label">CrystalInk · <strong>le cristal utile, jamais à plat</strong></p>
+        <p class="encre__dit">Glace en haut, bleu profond en bas&nbsp;: <code>#F5FDFF → #9BE9FF → #3594DA</code>. Tout titre doré de la Vitrine devient cette aiguille de glace.</p>
+      </div>
+    </Reveal>
+  </section>
+
+  <!-- ============ TYPOGRAPHIE ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Typographie · <strong>un accord spatial × technique</strong></p>
+    </Reveal>
+    <div class="typo">
+      <Reveal class="typo__ligne">
+        <span class="typo__role">Affichage · Jost Medium</span>
+        <p class="typo__affichage"><span class="gilded">Cristalliser</span> une idée</p>
+      </Reveal>
+      <Reveal delay={80} class="typo__ligne">
+        <span class="typo__role">Texte · Inter</span>
+        <p class="typo__texte">Une graine dit quoi&nbsp;; le génome en déduit comment, et dit pourquoi.</p>
+      </Reveal>
+      <Reveal delay={160} class="typo__ligne">
+        <span class="typo__role">Instrument · JetBrains Mono</span>
+        <p class="cr-label typo__instrument">Vallée · <strong>3 terrains · 2 semés · 41 appels</strong></p>
+      </Reveal>
+    </div>
+  </section>
+
+  <!-- ============ FORMES ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Le dialecte étranger · <strong>plus de rectangle arrondi</strong></p>
+      <h2>Chaque forme <em class="gilded">est une chose</em></h2>
+      <p class="bande__lead">
+        Hexagone régulier&nbsp;: une étape, sa couleur est son état. Hexagone allongé&nbsp;: ce qu’on
+        touche. Éclat&nbsp;: une carte. Survolée, une cellule tourne d’un sixième de tour et retombe
+        exactement sur sa forme — on la sent prise.
+      </p>
+    </Reveal>
+
+    <div class="formes">
+      <Reveal class="formes__bloc">
+        <h3 class="cr-label">Ce qu’on touche</h3>
+        <div class="formes__rangee">
+          <button type="button" class="prisme">Semer</button>
+          <button type="button" class="facette">Voir le plan</button>
+        </div>
+        <div class="formes__rangee">
+          <span class="pastille" data-sens="cristal">Choisi</span>
+          <span class="pastille" data-sens="seve">Vivant</span>
+          <span class="pastille" data-sens="vrille">Relié</span>
+          <span class="pastille" data-sens="nebuleuse">Composant</span>
+          <span class="pastille" data-sens="braise">Dérive</span>
+          <span class="pastille" data-sens="vierge">Vierge</span>
+        </div>
+      </Reveal>
+
+      <Reveal delay={100} class="formes__bloc">
+        <h3 class="cr-label">Une étape, cinq états</h3>
+        <ul class="cellules">
+          {
+            ETATS.map((e) => (
+              <li>
+                <span class="cellule" data-etat={e.etat} tabindex="0" aria-label={`${e.nom} : ${e.dit}`}>
+                  <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <polygon class="cellule__halo" points={hex(48)} />
+                    <polygon class="cellule__corps" points={hex(38)} />
+                  </svg>
+                </span>
+                <span class="cellules__nom">{e.nom}</span>
+                <span class="cellules__dit">{e.dit}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </Reveal>
+    </div>
+
+    <div class="eclats">
+      <Reveal>
+        <Eclat class="eclats__carte">
+          <p class="cr-label">Éclat · <strong>posé</strong></p>
+          <p>Deux coins opposés coupés, les deux autres à peine émoussés. L’arête prend la lumière depuis la coupe et s’éteint vers la droite.</p>
+        </Eclat>
+      </Reveal>
+      <Reveal delay={100}>
+        <Eclat class="eclats__carte" interactive tabindex="0">
+          <p class="cr-label">Éclat · <strong>survolable</strong></p>
+          <p>Le filet et l’arête s’allument. La lueur suit la forme taillée, pas son rectangle&nbsp;: c’est un <code>drop-shadow</code>, qui suit l’alpha.</p>
+        </Eclat>
+      </Reveal>
+    </div>
+  </section>
+
+  <!-- ============ LE MOUVEMENT ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Le mouvement · <strong>trois régimes, une horloge</strong></p>
+      <h2>Abondant ne veut pas dire <em class="gilded">gratuit</em></h2>
+      <p class="bande__lead">
+        Une seule boucle pour toute la page, réglée sur la cadence la plus haute demandée, arrêtée
+        quand tout est posé. Déclenchez un événement&nbsp;: l’horloge monte à 60 images par seconde le
+        temps qu’il finisse, puis redescend d’elle-même.
+      </p>
+    </Reveal>
+
+    <Reveal class="regimes" data-regimes>
+      <div class="regime">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="44" class="regime__halo" data-respire />
+          <polygon points="60,34 82.5,47 82.5,73 60,86 37.5,73 37.5,47" class="regime__coeur" />
+        </svg>
+        <h3>Respiration</h3>
+        <p>Un halo, un cœur. <strong>7 i/s</strong> suffisent à une lumière qui monte et descend en six secondes.</p>
+      </div>
+      <div class="regime">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <g data-derive>
+            <polygon points={hex(40).replace(/(\d+\.\d+),(\d+\.\d+)/g, (_, x, y) => `${(+x * 1.2).toFixed(1)},${(+y * 1.2).toFixed(1)}`)} class="regime__anneau" />
+          </g>
+          <circle cx="60" cy="60" r="6" class="regime__axe" />
+        </svg>
+        <h3>Dérive</h3>
+        <p>Une rotation lente et lisible tant qu’un système vit&nbsp;: <strong>12 i/s</strong>, quelques degrés par seconde.</p>
+      </div>
+      <div class="regime">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <path d="M14 96 Q60 6 106 96" class="regime__trajet" />
+          <circle r="6" class="regime__etincelle" data-etincelle cx="14" cy="96" />
+        </svg>
+        <h3>Événement</h3>
+        <p>Un appel qui file&nbsp;: fluide, à <strong>60 i/s</strong> — et il finit toujours.</p>
+        <button type="button" class="prisme regime__go" data-evenement>Déclencher</button>
+      </div>
+    </Reveal>
+
+    <Reveal class="horloge" aria-live="polite">
+      <span class="cr-label">L’horloge demande</span>
+      <span class="horloge__val" data-horloge-demande>—</span>
+      <span class="cr-label">et obtient</span>
+      <span class="horloge__val" data-horloge-obtenu>—</span>
+      <span class="horloge__qui" data-horloge-qui></span>
+    </Reveal>
+  </section>
+
+  <!-- ============ @PROPERTY ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">@property · <strong>une variable typée s’anime, une chaîne non</strong></p>
+      <h2>Le reflet <em class="gilded">qui tourne vraiment</em></h2>
+      <p class="bande__lead">
+        Survolez les deux prismes. À gauche, l’angle du dégradé est une variable CSS ordinaire&nbsp;:
+        le navigateur ne sait pas l’interpoler, il saute. À droite, la même variable est déclarée
+        <code>&lt;angle&gt;</code> par <code>@property</code>&nbsp;: elle tourne.
+      </p>
+    </Reveal>
+    <Reveal class="duo-prop">
+      <div class="duo-prop__cas">
+        <span class="prop-prisme prop-prisme--brut" tabindex="0">Variable ordinaire</span>
+        <p class="cr-label">--a : <strong>saute</strong></p>
+      </div>
+      <div class="duo-prop__cas">
+        <span class="prop-prisme prop-prisme--type" tabindex="0">@property &lt;angle&gt;</span>
+        <p class="cr-label">--angle : <strong>s’interpole</strong></p>
+      </div>
+    </Reveal>
+  </section>
+
+  <!-- ============ DEUX DIALECTES ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Garder la grammaire · <strong>changer la matière</strong></p>
+      <h2>Le même composant, <em class="gilded">deux dialectes</em></h2>
+      <p class="bande__lead">
+        Même balisage, au caractère près. Seuls les jetons diffèrent — et avec eux la forme&nbsp;: le
+        lingot doré devient un prisme, le panneau de verre devient un éclat.
+      </p>
+    </Reveal>
+    <div class="duo">
+      {
+        (['cosmos', 'cristal'] as const).map((d, i) => (
+          <Reveal delay={i * 120} class="duo__colonne">
+            <p class="cr-label duo__nom">{d === 'cosmos' ? 'Cosmos · la Vitrine, Almageste, Constellation' : 'Cristal · la Graine, Géode'}</p>
+            <div class="duo__boite" data-dialecte={d}>
+              <article class="sp">
+                <p class="sp__etiquette">Vallée · 3 terrains</p>
+                <h3 class="sp__titre">Semer la Médiathèque</h3>
+                <p class="sp__texte">Le plan est prêt&nbsp;: une base PostgreSQL, deux copies, une porte REST. Rien ne bouge avant votre accord.</p>
+                <div class="sp__actions">
+                  <span class="sp__bouton">Semer</span>
+                  <span class="sp__second">Voir le plan</span>
+                </div>
+              </article>
+            </div>
+          </Reveal>
+        ))
+      }
+    </div>
+  </section>
+
+  <div popover="manual" class="bandeau" data-bandeau role="status"></div>
+</Cristal>
+
+<style>
+  .tete {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding-block: clamp(2.5rem, 7vw, 5rem) 0;
+  }
+  .tete h1 { font-size: var(--step-5); }
+  .tete h1 em { font-style: italic; }
+  .tete__lead { max-width: 58ch; font-size: var(--step-1); line-height: 1.6; color: var(--color-ink-300); }
+
+  .bande { padding-block: clamp(3rem, 7vw, 5.5rem); }
+  .bande h2 { font-size: var(--step-3); margin-block: 0.75rem 1rem; }
+  .bande h2 em { font-style: italic; }
+  .bande__lead { max-width: 62ch; color: var(--color-ink-500); margin-bottom: 2.25rem; }
+  code { font-family: var(--font-mono); font-size: 0.86em; color: var(--cr-bright); }
+
+  /* ---------- Jetons ---------- */
+  :global(.jetons) { margin-top: 1.75rem; }
+  :global(.jetons) h3 { margin-bottom: 0.75rem; }
+  :global(.jetons) ul {
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  }
+  .jeton {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 2.1rem 1fr;
+    grid-template-rows: auto auto;
+    gap: 0 0.7rem;
+    align-items: center;
+    padding: 0.55rem 0.7rem;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: rgb(22 18 43 / 0.6);
+    border: 1px solid rgb(255 255 255 / 0.07);
+    clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .jeton:hover, .jeton:focus-visible { background: rgb(38 32 70 / 0.8); border-color: rgb(79 208 245 / 0.4); outline: none; }
+  .jeton__pastille {
+    grid-row: span 2;
+    width: 2.1rem;
+    aspect-ratio: 1;
+    background: var(--c);
+    clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.15);
+  }
+  .jeton__nom { font-size: 0.8rem; color: var(--color-ink-100); }
+  .jeton__val { font-family: var(--font-mono); font-size: 0.66rem; color: var(--color-ink-500); letter-spacing: 0.06em; }
+
+  :global(.encre) { display: flex; align-items: center; gap: 1.25rem; margin-top: 2rem; }
+  .encre__barre {
+    width: 0.9rem;
+    height: 4.5rem;
+    flex: none;
+    background: linear-gradient(180deg, #f5fdff, #9be9ff 45%, #3594da);
+    clip-path: polygon(50% 0, 100% 12%, 100% 88%, 50% 100%, 0 88%, 0 12%);
+  }
+  .encre__dit { color: var(--color-ink-300); font-size: 0.92rem; margin-top: 0.3rem; }
+
+  /* ---------- Typographie ---------- */
+  .typo { display: grid; gap: 0; margin-top: 1rem; }
+  :global(.typo__ligne) {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid rgb(255 255 255 / 0.07);
+  }
+  @media (width >= 48rem) {
+    :global(.typo__ligne) { grid-template-columns: 14rem 1fr; align-items: baseline; }
+  }
+  .typo__role { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-ink-500); }
+  .typo__affichage { font-family: var(--font-display); font-weight: 500; font-size: var(--step-4); line-height: 1.05; color: var(--color-ink-100); }
+  .typo__texte { font-size: var(--step-1); color: var(--color-ink-300); }
+
+  /* ---------- Formes ---------- */
+  .formes { display: grid; gap: 2.5rem; grid-template-columns: 1fr; }
+  @media (width >= 60rem) { .formes { grid-template-columns: 1fr 1.3fr; } }
+  :global(.formes__bloc) h3 { margin-bottom: 1rem; }
+  .formes__rangee { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.1rem; }
+  .formes__rangee button { font: inherit; cursor: pointer; }
+
+  .cellules {
+    list-style: none;
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  }
+  .cellules li { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.3rem; }
+  .cellule { width: 4.6rem; aspect-ratio: 1; display: block; outline: none; }
+  .cellule svg { width: 100%; height: 100%; overflow: visible; }
+  .cellule__corps, .cellule__halo { transform-origin: 50px 50px; transition: rotate 0.5s var(--ease-facet), opacity 0.3s; }
+  .cellule__corps { stroke-width: 2.2; }
+  .cellule__halo { fill: none; stroke-width: 1.2; opacity: 0; }
+  .cellule:hover .cellule__corps, .cellule:focus-visible .cellule__corps { rotate: 60deg; }
+  .cellule:hover .cellule__halo, .cellule:focus-visible .cellule__halo { opacity: 1; rotate: 60deg; }
+  .cellule[data-etat='faite'] .cellule__corps { fill: rgb(196 242 74 / 0.18); stroke: #c4f24a; }
+  .cellule[data-etat='faite'] .cellule__halo { stroke: rgb(196 242 74 / 0.5); }
+  .cellule[data-etat='ouverte'] .cellule__corps { fill: rgb(79 208 245 / 0.18); stroke: #4fd0f5; animation: respirer 6s ease-in-out infinite; }
+  .cellule[data-etat='ouverte'] .cellule__halo { stroke: rgb(79 208 245 / 0.5); }
+  .cellule[data-etat='avenir'] .cellule__corps { fill: rgb(255 255 255 / 0.03); stroke: rgb(128 126 153 / 0.55); }
+  .cellule[data-etat='avenir'] .cellule__halo { stroke: rgb(128 126 153 / 0.4); }
+  .cellule[data-etat='bloquee'] .cellule__corps { fill: rgb(242 121 58 / 0.16); stroke: #f2793a; }
+  .cellule[data-etat='bloquee'] .cellule__halo { stroke: rgb(242 121 58 / 0.5); }
+  .cellule[data-etat='vivante'] .cellule__corps { fill: rgb(196 242 74 / 0.28); stroke: #e2ff8a; }
+  .cellule[data-etat='vivante'] .cellule__halo { stroke: rgb(196 242 74 / 0.7); opacity: 1; animation: battre 2.4s var(--ease-gravity) infinite; }
+  @keyframes respirer {
+    0%, 100% { stroke-opacity: 0.55; fill-opacity: 0.6; }
+    50% { stroke-opacity: 1; fill-opacity: 1; }
+  }
+  @keyframes battre {
+    0%, 70%, 100% { scale: 1; opacity: 0.25; }
+    15% { scale: 1.14; opacity: 0.95; }
+    30% { scale: 1.02; opacity: 0.5; }
+    42% { scale: 1.09; opacity: 0.8; }
+  }
+  .cellules__nom { font-size: 0.86rem; color: var(--color-ink-100); }
+  .cellules__dit { font-size: 0.74rem; color: var(--color-ink-500); }
+
+  .eclats { display: grid; gap: 1rem; margin-top: 2.5rem; grid-template-columns: 1fr; }
+  @media (width >= 52rem) { .eclats { grid-template-columns: 1fr 1fr; } }
+  .eclats > :global(*) { height: 100%; }
+  :global(.eclats__carte) { height: 100%; padding: 1.6rem; display: flex; flex-direction: column; gap: 0.6rem; outline: none; }
+  :global(.eclats__carte) p:not(.cr-label) { color: var(--color-ink-300); font-size: 0.94rem; }
+
+  /* ---------- Régimes ---------- */
+  :global(.regimes) { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+  @media (width >= 56rem) { :global(.regimes) { grid-template-columns: repeat(3, 1fr); } }
+  .regime {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(180deg, rgb(30 24 56 / 0.6), rgb(17 13 33 / 0.4));
+    clip-path: polygon(0 14px, 14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  }
+  .regime svg { width: 7.5rem; align-self: center; margin-bottom: 0.5rem; overflow: visible; }
+  .regime h3 { font-size: var(--step-1); }
+  .regime p { color: var(--color-ink-500); font-size: 0.9rem; }
+  .regime p strong { color: var(--cr-sap); font-weight: 500; }
+  .regime__halo { fill: rgb(196 242 74 / 0.12); stroke: rgb(196 242 74 / 0.5); stroke-width: 1.5; }
+  .regime__coeur { fill: rgb(196 242 74 / 0.25); stroke: #c4f24a; stroke-width: 2; }
+  .regime__anneau { fill: none; stroke: #4fd0f5; stroke-width: 2; stroke-dasharray: 10 6; }
+  .regime__axe { fill: #a6eeff; }
+  .regime__trajet { fill: none; stroke: rgb(240 82 176 / 0.45); stroke-width: 1.5; stroke-dasharray: 2 6; stroke-linecap: round; }
+  .regime__etincelle { fill: #e2ff8a; filter: drop-shadow(0 0 6px #c4f24a); }
+  .regime__go { margin-top: auto; font: inherit; font-size: 0.84rem; padding: 0.6rem 1.6rem; cursor: pointer; }
+
+  :global(.horloge) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.9rem;
+    margin-top: 1.5rem;
+  }
+  .horloge__val { font-family: var(--font-display); font-weight: 500; font-size: var(--step-2); color: var(--cr-bright); font-variant-numeric: tabular-nums; min-width: 4.5ch; }
+  .horloge__qui { flex-basis: 100%; font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-ink-500); }
+
+  /* ---------- @property ---------- */
+  @property --angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 135deg;
+  }
+  :global(.duo-prop) { display: flex; flex-wrap: wrap; gap: 2.5rem; }
+  .duo-prop__cas { display: flex; flex-direction: column; align-items: flex-start; gap: 0.9rem; }
+  .prop-prisme {
+    --tip: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    padding: 1.1rem 2.6rem;
+    font-weight: 600;
+    color: #071a33;
+    cursor: default;
+    outline: none;
+    clip-path: polygon(var(--tip) 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, var(--tip) 100%, 0 50%);
+    transition: --angle 1.2s var(--ease-cosmic), --a 1.2s var(--ease-cosmic);
+  }
+  .prop-prisme--brut {
+    --a: 135deg;
+    background: linear-gradient(var(--a), #f2fdff, #a6eeff 40%, #4fc4ee 75%, #3a86d8);
+  }
+  .prop-prisme--brut:hover, .prop-prisme--brut:focus-visible { --a: 315deg; }
+  .prop-prisme--type { background: linear-gradient(var(--angle), #f2fdff, #a6eeff 40%, #4fc4ee 75%, #3a86d8); }
+  .prop-prisme--type:hover, .prop-prisme--type:focus-visible { --angle: 495deg; }
+
+  /* ---------- Deux dialectes : jetons redéfinis, balisage identique ---------- */
+  .duo { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+  @media (width >= 56rem) { .duo { grid-template-columns: 1fr 1fr; } }
+  .duo__nom { margin-bottom: 0.75rem; }
+  .duo__boite { padding: 2rem; }
+  .duo__boite[data-dialecte='cosmos'] {
+    --sp-fond: linear-gradient(160deg, #141d2e, #080d18);
+    --sp-filet: rgb(224 173 60 / 0.22);
+    --sp-encre: #f0f2f6;
+    --sp-encre-2: #828997;
+    --sp-label: #e0ad3c;
+    --sp-titre: linear-gradient(168deg, #fbeec2, #edc665 34%, #94661a 62%, #f3d98c);
+    --sp-bouton: linear-gradient(160deg, #fbeec2, #edc665 45%, #c08c25);
+    --sp-bouton-encre: #3e290d;
+    --sp-lueur: rgb(224 173 60 / 0.45);
+    background: radial-gradient(90% 70% at 50% 110%, rgb(148 102 26 / 0.35), transparent 60%), #04060d;
+  }
+  .duo__boite[data-dialecte='cristal'] {
+    --sp-fond: linear-gradient(180deg, #1e1838, #110d21);
+    --sp-filet: rgb(255 255 255 / 0.12);
+    --sp-encre: #ecebf4;
+    --sp-encre-2: #807e99;
+    --sp-label: #4fd0f5;
+    --sp-titre: linear-gradient(180deg, #f5fdff, #9be9ff 45%, #3594da);
+    --sp-bouton: linear-gradient(135deg, #f2fdff, #a6eeff 40%, #4fc4ee 75%, #3a86d8);
+    --sp-bouton-encre: #071a33;
+    --sp-lueur: rgb(79 208 245 / 0.4);
+    background: radial-gradient(80% 70% at 12% 110%, rgb(196 242 74 / 0.12), transparent 60%), radial-gradient(60% 60% at 90% 0%, rgb(240 82 176 / 0.12), transparent 70%), #07050f;
+  }
+  .sp {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.6rem;
+    background: var(--sp-fond);
+    color: var(--sp-encre-2);
+  }
+  .sp__etiquette { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sp-label); }
+  .sp__titre {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: var(--step-2);
+    background: var(--sp-titre);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sp__texte { font-size: 0.92rem; }
+  .sp__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+  .sp__bouton, .sp__second { padding: 0.65rem 1.6rem; font-size: 0.86rem; font-weight: 500; }
+  .sp__bouton { background: var(--sp-bouton); color: var(--sp-bouton-encre); filter: drop-shadow(0 8px 18px var(--sp-lueur)); }
+  .sp__second { color: var(--sp-encre); }
+
+  /* La forme suit le dialecte : panneau de verre arrondi, ou éclat taillé. */
+  [data-dialecte='cosmos'] .sp { border-radius: 14px; border: 1px solid var(--sp-filet); box-shadow: inset 0 1px 0 rgb(247 230 184 / 0.12), 0 24px 60px -20px rgb(0 0 0 / 0.75); }
+  [data-dialecte='cosmos'] .sp__bouton { border-radius: 999px; }
+  [data-dialecte='cosmos'] .sp__second { border-radius: 999px; border: 1px solid rgb(237 198 101 / 0.3); }
+  [data-dialecte='cristal'] .sp {
+    clip-path: polygon(0 14px, 14px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 3px 100%, 0 calc(100% - 3px));
+    box-shadow: inset 0 0 0 1px var(--sp-filet), inset 0 1px 0 rgb(232 251 255 / 0.35);
+  }
+  [data-dialecte='cristal'] .sp__bouton,
+  [data-dialecte='cristal'] .sp__second {
+    --tip: 0.85em;
+    clip-path: polygon(var(--tip) 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, var(--tip) 100%, 0 50%);
+  }
+  [data-dialecte='cristal'] .sp__second { background: linear-gradient(90deg, rgb(79 208 245 / 0.28), rgb(232 251 255 / 0.5) 50%, rgb(79 208 245 / 0.28)); color: #071a33; }
+
+  /* ---------- Bandeau (Popover API : couche supérieure, sans z-index) ---------- */
+  .bandeau {
+    inset: auto auto 1.5rem 50%;
+    translate: -50% 0;
+    margin: 0;
+    padding: 0.7rem 1.6rem;
+    border: 0;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    color: #ecebf4;
+    background: linear-gradient(180deg, rgb(38 32 70 / 0.97), rgb(22 18 43 / 0.97));
+    clip-path: polygon(0.8em 0, calc(100% - 0.8em) 0, 100% 50%, calc(100% - 0.8em) 100%, 0.8em 100%, 0 50%);
+    opacity: 0;
+    transition: opacity 0.48s var(--ease-gravity), translate 0.48s var(--ease-gravity), display 0.48s allow-discrete, overlay 0.48s allow-discrete;
+  }
+  .bandeau:popover-open {
+    opacity: 1;
+    translate: -50% -6px;
+    transition-duration: 0.22s;
+    transition-timing-function: var(--ease-cosmic);
+  }
+  @starting-style {
+    .bandeau:popover-open { opacity: 0; translate: -50% 10px; }
+  }
+</style>
+
+<script>
+  import { join, leave, wake, snapshot, BREATHING, DRIFT, EVENT, reducedMotion, type Mover } from '../../lib/motion';
+
+  document.addEventListener('astro:page-load', () => {
+    const racine = document.querySelector<HTMLElement>('[data-regimes]');
+    if (!racine) return;
+
+    // --- Copier un jeton, et le dire (bandeau : 220 ms à l'entrée, ≈ 3 s, 480 ms à la sortie) ---
+    const bandeau = document.querySelector<HTMLElement & { showPopover?: () => void; hidePopover?: () => void }>('[data-bandeau]');
+    let minuterie = 0;
+    const annoncer = (texte: string) => {
+      if (!bandeau) return;
+      bandeau.textContent = texte;
+      try {
+        bandeau.hidePopover?.();
+        bandeau.showPopover?.();
+      } catch {}
+      clearTimeout(minuterie);
+      minuterie = window.setTimeout(() => {
+        try { bandeau.hidePopover?.(); } catch {}
+      }, 3000);
+    };
+    document.querySelectorAll<HTMLButtonElement>('[data-copier]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const val = b.dataset.copier!;
+        try {
+          await navigator.clipboard.writeText(val);
+          annoncer(`Copié : ${val} — ${b.querySelector('.jeton__nom')?.textContent}`);
+        } catch {
+          annoncer(`Copie refusée par le navigateur — la valeur est ${val}.`);
+        }
+      });
+    });
+
+    // --- Les trois régimes, sur l'horloge commune ---
+    const halo = racine.querySelector<SVGCircleElement>('[data-respire]')!;
+    const anneau = racine.querySelector<SVGGElement>('[data-derive]')!;
+    const etincelle = racine.querySelector<SVGCircleElement>('[data-etincelle]')!;
+    let visible = false;
+
+    const respiration: Mover = {
+      kind: 'Respiration (halo)',
+      advance(now) {
+        if (!visible) return 0;
+        const b = 0.5 - 0.5 * Math.cos((Math.PI * now) / 3);
+        halo.style.opacity = String(0.35 + 0.65 * b);
+        halo.style.transform = `scale(${0.92 + 0.08 * b})`;
+        return BREATHING;
+      },
+    };
+    let angle = 0;
+    const derive: Mover = {
+      kind: 'Dérive (anneau)',
+      advance(_now, dt) {
+        if (!visible) return 0;
+        angle = (angle + 8 * dt) % 360;
+        anneau.style.transform = `rotate(${angle.toFixed(2)}deg)`;
+        return DRIFT;
+      },
+    };
+    // L'événement : une étincelle sur une parabole, 0,9 s, puis rien.
+    let t0 = -1;
+    const evenement: Mover = {
+      kind: 'Événement (étincelle)',
+      advance(now) {
+        if (t0 < 0) return 0;
+        const p = Math.min(1, (now - t0) / 0.9);
+        const e = 1 - Math.pow(1 - p, 3);
+        const x = 14 + 92 * e;
+        const y = (1 - e) * (1 - e) * 96 + 2 * (1 - e) * e * 6 + e * e * 96;
+        etincelle.setAttribute('cx', x.toFixed(1));
+        etincelle.setAttribute('cy', y.toFixed(1));
+        if (p >= 1) {
+          t0 = -1;
+          return 0;
+        }
+        return EVENT;
+      },
+    };
+    halo.style.transformOrigin = '60px 60px';
+    anneau.style.transformOrigin = '60px 60px';
+
+    if (!reducedMotion()) {
+      join(respiration);
+      join(derive);
+      join(evenement);
+    }
+    racine.querySelector('[data-evenement]')!.addEventListener('click', () => {
+      // L'événement part de l'heure de l'horloge : on la lit au prochain tour.
+      const lire: Mover = {
+        kind: '',
+        advance(now) {
+          t0 = now;
+          leave(lire);
+          wake(evenement);
+          return 0;
+        },
+      };
+      join(lire);
+    });
+
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) {
+        wake(respiration);
+        wake(derive);
+      }
+    });
+    io.observe(racine);
+
+    // --- Ce que l'horloge demande, et ce qu'elle obtient ---
+    const demande = document.querySelector<HTMLElement>('[data-horloge-demande]')!;
+    const obtenu = document.querySelector<HTMLElement>('[data-horloge-obtenu]')!;
+    const qui = document.querySelector<HTMLElement>('[data-horloge-qui]')!;
+    const lecture = window.setInterval(() => {
+      const s = snapshot();
+      demande.textContent = s.running ? `${s.requested} i/s` : 'posée';
+      obtenu.textContent = `${s.obtained} i/s`;
+      qui.textContent = s.demands
+        .filter((d) => d.kind)
+        .map((d) => `${d.kind} : ${d.fps ? d.fps + ' i/s' : 'posé'}`)
+        .join('  ·  ');
+    }, 500);
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        clearInterval(lecture);
+        io.disconnect();
+        leave(respiration);
+        leave(derive);
+        leave(evenement);
+      },
+      { once: true },
+    );
+  });
+</script>

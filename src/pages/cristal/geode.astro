@@ -1,0 +1,685 @@
+---
+import Cristal from '../../layouts/Cristal.astro';
+import Eclat from '../../components/Eclat.astro';
+import Reveal from '../../components/Reveal.astro';
+import {
+  FACETTES,
+  STATUTS,
+  GEODES,
+  IP_CHAPITRES,
+  IP_CRISTAUX,
+  IP_PROGRESSION,
+  type FacetStatus,
+} from '../../data/cristal';
+
+/* -------------------------------------------------------------------------
+   La coupe — géométrie de Geode.App/Controls/GeodeMap.cs, calculée au build.
+   Chaque cristal est un secteur, chaque facette un anneau : la coque (I)
+   dehors, le cœur (VI) dedans. Un jour entre deux cristaux, un jour plus
+   large entre deux chapitres.
+   ---------------------------------------------------------------------- */
+const SIZE = 540;
+const C = SIZE / 2;
+const OUTER = SIZE / 2 - 30;
+const INNER = OUTER * 0.34;
+const RING = (OUTER - INNER) / 6;
+const CRYSTAL_GAP = 1.2;
+const CHAPTER_GAP = 4.5;
+
+const n = IP_CRISTAUX.length;
+const breaks =
+  IP_CRISTAUX.slice(1).filter((c, i) => c.chapitre !== IP_CRISTAUX[i].chapitre).length +
+  (IP_CRISTAUX[0].chapitre !== IP_CRISTAUX[n - 1].chapitre ? 1 : 0);
+const SWEEP = (360 - n * CRYSTAL_GAP - breaks * CHAPTER_GAP) / n;
+
+const rad = (d: number) => (d * Math.PI) / 180;
+const pt = (r: number, a: number) => `${(C + r * Math.cos(rad(a))).toFixed(2)} ${(C + r * Math.sin(rad(a))).toFixed(2)}`;
+const sector = (rIn: number, rOut: number, a0: number, a1: number) => {
+  const large = a1 - a0 > 180 ? 1 : 0;
+  return `M${pt(rOut, a0)} A${rOut} ${rOut} 0 ${large} 1 ${pt(rOut, a1)} L${pt(rIn, a1)} A${rIn} ${rIn} 0 ${large} 0 ${pt(rIn, a0)} Z`;
+};
+
+// Fraîcheur d'exemple d'une facette taillée (0..1) : une facette fraîche
+// brille, une ancienne pâlit (Visuals.FacetColors : 0,55 + 0,4 × rétention).
+const retention = (i: number, k: number) => 0.35 + ((i * 37 + k * 53) % 65) / 100;
+
+let angle = -90 + CRYSTAL_GAP / 2;
+const sectors = IP_CRISTAUX.map((cr, i) => {
+  if (i > 0 && IP_CRISTAUX[i - 1].chapitre !== cr.chapitre) angle += CHAPTER_GAP;
+  const a0 = angle;
+  const a1 = angle + SWEEP;
+  const mid = a0 + SWEEP / 2;
+  angle += SWEEP + CRYSTAL_GAP;
+  const statuses = IP_PROGRESSION[cr.id];
+  return {
+    ...cr,
+    index: i,
+    statuses,
+    level: statuses.filter((s) => s === 'acquise' || s === 'araviver').length,
+    cells: statuses.map((status, k) => ({
+      k,
+      status,
+      d: sector(OUTER - (k + 1) * RING + 1.6, OUTER - k * RING, a0, a1),
+      r: retention(i, k),
+    })),
+    label: { x: C + (OUTER + 14) * Math.cos(rad(mid)), y: C + (OUTER + 14) * Math.sin(rad(mid)) },
+  };
+});
+
+// « Le niveau d'une géode est celui de son cristal le moins avancé ; 6 = la maîtrise. »
+const niveau = Math.min(...sectors.map((s) => s.level));
+const taillees = sectors.reduce((t, s) => t + s.level, 0);
+
+// Le cœur : un hexagone (pointe en haut).
+const hex = (r: number, cx = C, cy = C) =>
+  Array.from({ length: 6 }, (_, k) => {
+    const a = rad(-90 + 60 * k);
+    return `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`;
+  }).join(' ');
+
+/* -------------------------------------------------------------------------
+   La gemme d'un cristal (FacetGem.cs) : six triangles, I en haut à droite,
+   puis dans le sens des aiguilles d'une montre jusqu'à VI.
+   ---------------------------------------------------------------------- */
+const GEM = 200;
+const gemFaces = (statuses: readonly FacetStatus[]) => {
+  const r = GEM / 2 - 2;
+  const g = GEM / 2;
+  const v = (k: number) => [g + r * Math.cos(rad(-90 + 60 * k)), g + r * Math.sin(rad(-90 + 60 * k))];
+  return statuses.map((status, k) => {
+    const [ax, ay] = v(k);
+    const [bx, by] = v(k + 1);
+    return {
+      k,
+      status,
+      points: `${g},${g} ${ax.toFixed(2)},${ay.toFixed(2)} ${bx.toFixed(2)},${by.toFixed(2)}`,
+      cx: (g + ax + bx) / 3,
+      cy: (g + ay + by) / 3,
+    };
+  });
+};
+
+const DEFAUT = 'masque';
+const chapitreDe = (id: string) => IP_CHAPITRES.find((c) => c.id === id)?.nom ?? id;
+
+/* -------------------------------------------------------------------------
+   Le cabinet : la STRUCTURE de chaque géode (son nombre de cristaux), pas sa
+   progression — celle-là n'existe que sur le poste de Hugo.
+   ---------------------------------------------------------------------- */
+const mini = (count: number) => {
+  const S = 120;
+  const c = S / 2;
+  const out = S / 2 - 3;
+  const inn = out * 0.34;
+  const rg = (out - inn) / 6;
+  const gap = 2.4;
+  const sw = (360 - count * gap) / count;
+  const p = (r: number, a: number) => `${(c + r * Math.cos(rad(a))).toFixed(2)} ${(c + r * Math.sin(rad(a))).toFixed(2)}`;
+  const paths: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const a0 = -90 + gap / 2 + i * (sw + gap);
+    const a1 = a0 + sw;
+    for (let k = 0; k < 6; k++) {
+      const ro = out - k * rg;
+      const ri = ro - rg + 1;
+      paths.push(`M${p(ro, a0)} A${ro} ${ro} 0 0 1 ${p(ro, a1)} L${p(ri, a1)} A${ri} ${ri} 0 0 0 ${p(ri, a0)} Z`);
+    }
+  }
+  return paths;
+};
+---
+
+<Cristal
+  title="La géode en coupe — dialecte cristal"
+  description="La vraie géode « Comment une IP trouve son chemin » de Géode, vue en coupe : quatorze cristaux, six facettes chacun, et la gemme qui se taille."
+  page="geode"
+>
+  <header class="shell tete">
+    <Reveal><p class="eyebrow">Géode · apprendre une notion facette par facette</p></Reveal>
+    <Reveal delay={100}><h1>La géode <em class="gilded">en coupe</em></h1></Reveal>
+    <Reveal delay={200}>
+      <p class="tete__lead">
+        Dans Géode, un sujet est une géode, chaque notion un cristal, et chaque cristal a six facettes
+        — de reconnaître à concevoir. Voici une vraie géode de l’application, tranchée : chaque
+        secteur est un cristal, chaque anneau une facette, chaque cellule se survole et se clique.
+      </p>
+    </Reveal>
+    <Reveal delay={260}>
+      <p class="tete__note">
+        <span class="pastille" data-sens="vrille">Exemple</span>
+        Les titres, les chapitres et les résumés sont ceux de la géode réelle. La progression, elle,
+        est inventée : la vraie reste sur le poste, dans le profil de Géode.
+      </p>
+    </Reveal>
+  </header>
+
+  <!-- ============ LA COUPE ET LA GEMME ============ -->
+  <section class="shell atelier">
+    <Reveal class="coupe">
+      <p class="cr-label coupe__titre">
+        Comment une IP trouve son chemin · <strong>14 cristaux · 84 facettes · {taillees} taillées</strong>
+      </p>
+      <div class="coupe__carte">
+        <svg
+          class="carte"
+          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          role="grid"
+          aria-label="La géode en coupe. Flèches gauche et droite : changer de cristal. Haut et bas : changer de facette. Entrée : choisir."
+          tabindex="0"
+          data-carte
+        >
+          <circle cx={C} cy={C} r={OUTER + 10} class="carte__disque" />
+          <polygon points={hex(INNER - 6)} class:list={['carte__coeur', { 'is-maitrise': niveau >= 6 }]} />
+
+          {
+            sectors.map((s) => (
+              <g class="secteur" data-cristal={s.id} data-index={s.index} role="row" aria-label={s.titre}>
+                {s.cells.map((cell) => (
+                  <path
+                    class="cellule"
+                    d={cell.d}
+                    data-statut={cell.status}
+                    data-facette={cell.k}
+                    style={`--r:${cell.r.toFixed(2)}`}
+                    role="gridcell"
+                    aria-label={`${s.titre} — facette ${FACETTES[cell.k].n}, ${FACETTES[cell.k].nom} : ${STATUTS[cell.status].label}`}
+                  />
+                ))}
+                <text x={s.label.x} y={s.label.y} class:list={['carte__num', { 'is-gemme': s.level === 6, 'is-vierge': s.level === 0 }]}>
+                  {s.index + 1}
+                </text>
+              </g>
+            ))
+          }
+        </svg>
+
+        <div class="coupe__centre" aria-live="polite">
+          <p class="centre__niveau" data-centre-titre>{niveau}</p>
+          <p class="centre__detail" data-centre-detail>niveau de la géode<br />la maîtrise est à 6</p>
+        </div>
+      </div>
+      <p class="coupe__aide cr-label">
+        Survoler · <strong>un cristal</strong> &nbsp;—&nbsp; Cliquer · <strong>le choisir</strong> &nbsp;—&nbsp;
+        ← → ↑ ↓ · <strong>au clavier</strong>
+      </p>
+    </Reveal>
+
+    <Reveal delay={120} class="inspecteur-wrap">
+      <Eclat class="inspecteur" cut={18}>
+        {
+          sectors.map((s) => (
+            <article class="fiche" data-fiche={s.id} hidden={s.id !== DEFAUT}>
+              <p class="cr-label">
+                Cristal {s.index + 1} sur {n} · <strong>{chapitreDe(s.chapitre)}</strong>
+              </p>
+              <h2 class="fiche__titre">{s.titre}</h2>
+              <p class="fiche__resume">{s.resume}</p>
+
+              <div class="fiche__gemme">
+                <svg class:list={['gemme', { 'is-entiere': s.level === 6 }]} viewBox={`0 0 ${GEM} ${GEM}`} aria-hidden="true">
+                  {s.level === 6 && <polygon class="gemme__halo" points={hex(GEM / 2 - 2, GEM / 2, GEM / 2)} />}
+                  {gemFaces(s.statuses).map((f) => (
+                    <g class="face" data-facette={f.k} data-statut={f.status} style={`--r:${retention(s.index, f.k).toFixed(2)}`}>
+                      <polygon points={f.points} />
+                      <text x={f.cx} y={f.cy}>{FACETTES[f.k].n}</text>
+                    </g>
+                  ))}
+                </svg>
+                <p class="fiche__niveau">
+                  <span class="gilded">{s.level}</span>
+                  <small>/ 6 facettes<br />taillées</small>
+                </p>
+              </div>
+
+              <ol class="fiche__facettes">
+                {s.statuses.map((status, k) => (
+                  <li data-facette={k}>
+                    <span class="fiche__n">{FACETTES[k].n}</span>
+                    <span class="fiche__nom">{FACETTES[k].nom}</span>
+                    <span class="pastille" data-sens={STATUTS[status].sens === 'cristal-profond' ? 'cristal' : STATUTS[status].sens}>
+                      {STATUTS[status].label}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </article>
+          ))
+        }
+      </Eclat>
+    </Reveal>
+  </section>
+
+  <!-- ============ LA LÉGENDE ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Ce que dit une cellule · <strong>sa couleur est son état</strong></p>
+      <h2>Sept états, <em class="gilded">cinq sens</em></h2>
+    </Reveal>
+    <ul class="legende">
+      {
+        (Object.keys(STATUTS) as FacetStatus[]).map((k, i) => (
+          <Reveal as="li" delay={(i % 4) * 70} class="legende__item">
+            <svg viewBox="0 0 40 40" aria-hidden="true"><path class="cellule" data-statut={k} style="--r:0.8" d="M4 10 A30 30 0 0 1 36 10 L30 22 A18 18 0 0 0 10 22 Z" /></svg>
+            <div>
+              <h3>{STATUTS[k].label}</h3>
+              <p>{STATUTS[k].dit}</p>
+            </div>
+          </Reveal>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ============ LES SIX FACETTES ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Du plus simple au plus exigeant · <strong>la coque, puis le cœur</strong></p>
+      <h2>Six facettes <em class="gilded">par cristal</em></h2>
+      <p class="bande__lead">
+        Une facette ne se taille qu’après la précédente. Une fois taillée, elle revient à intervalles
+        croissants pour être ravivée, juste avant l’oubli.
+      </p>
+    </Reveal>
+    <ol class="facettes">
+      {
+        FACETTES.map((f, i) => (
+          <Reveal as="li" delay={i * 60} class="facettes__item">
+            <span class="facettes__n gilded">{f.n}</span>
+            <h3>{f.nom}</h3>
+            <p>{f.dit}</p>
+          </Reveal>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- ============ LE CABINET ============ -->
+  <section class="shell bande">
+    <Reveal>
+      <p class="cr-label">Le cabinet · <strong>11 géodes livrées avec l’application</strong></p>
+      <h2>Toutes les géodes, <em class="gilded">en structure</em></h2>
+      <p class="bande__lead">
+        Chaque coupe dit le vrai nombre de cristaux de la géode, et rien d’autre : aucune
+        progression n’est montrée là où il n’y en a pas à montrer.
+      </p>
+    </Reveal>
+    <ul class="cabinet">
+      {
+        GEODES.map((g, i) => (
+          <Reveal as="li" delay={(i % 4) * 70}>
+            <Eclat class="cabinet__carte" cut={12}>
+              <svg class="cabinet__coupe" viewBox="0 0 120 120" aria-hidden="true">
+                {mini(g.cristaux).map((d) => <path d={d} />)}
+              </svg>
+              <div>
+                <span class="pastille" data-sens="nebuleuse">{g.domaine}</span>
+                <h3>{g.titre}</h3>
+                <p>{g.sous}</p>
+                <p class="cabinet__compte">{g.cristaux} cristaux · {g.cristaux * 6} facettes</p>
+              </div>
+            </Eclat>
+          </Reveal>
+        ))
+      }
+    </ul>
+  </section>
+</Cristal>
+
+<style>
+  .tete {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding-block: clamp(2.5rem, 7vw, 5rem) 2rem;
+  }
+  .tete h1 { font-size: var(--step-4); }
+  .tete h1 em { font-style: italic; }
+  .tete__lead { max-width: 60ch; font-size: var(--step-1); line-height: 1.6; color: var(--color-ink-300); }
+  .tete__note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 70ch;
+    font-size: 0.86rem;
+    color: var(--color-ink-500);
+  }
+
+  /* ---------- Atelier : la coupe à gauche, la fiche à droite ---------- */
+  .atelier {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+    padding-block: 1.5rem 3rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 68rem) {
+    .atelier { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  }
+  .coupe__titre { margin-bottom: 1rem; }
+  .coupe__carte { position: relative; max-width: 36rem; margin-inline: auto; }
+  .carte { display: block; width: 100%; height: auto; overflow: visible; }
+  .carte:focus-visible { outline: none; }
+  .carte:focus-visible .carte__disque { stroke: var(--cr-bright); stroke-opacity: 0.7; }
+  .carte__disque { fill: rgb(7 5 15 / 0.55); stroke: rgb(144 103 240 / 0.18); stroke-width: 1; }
+  .carte__coeur { fill: rgb(17 13 33 / 0.92); stroke: rgb(166 238 255 / 0.35); stroke-width: 1.2; }
+  .carte__coeur.is-maitrise { stroke: rgb(166 238 255 / 0.95); }
+  .carte__num {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--color-ink-300);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+  }
+  .carte__num.is-vierge { fill: var(--color-ink-500); }
+  .carte__num.is-gemme { fill: var(--cr-bright); }
+
+  /* Les états — Geode.App/Controls/Visuals.cs, FacetColors. */
+  :global(.cellule), .face polygon {
+    stroke-width: 1;
+    stroke-linejoin: round;
+    cursor: pointer;
+    transition: stroke-width 0.2s, filter 0.3s var(--ease-cosmic);
+  }
+  :global(.cellule[data-statut='acquise']), .face[data-statut='acquise'] polygon {
+    fill: rgb(79 208 245 / calc(0.55 + 0.4 * var(--r)));
+    stroke: rgb(166 238 255 / 0.9);
+  }
+  :global(.cellule[data-statut='araviver']), .face[data-statut='araviver'] polygon {
+    fill: rgb(35 137 208 / 0.42);
+    stroke: rgb(79 208 245 / 0.75);
+  }
+  :global(.cellule[data-statut='enattente']), .face[data-statut='enattente'] polygon {
+    fill: rgb(240 82 176 / 0.32);
+    stroke: rgb(240 82 176 / 0.9);
+  }
+  :global(.cellule[data-statut='oubliee']), .face[data-statut='oubliee'] polygon {
+    fill: rgb(242 121 58 / 0.3);
+    stroke: rgb(242 121 58 / 0.9);
+  }
+  :global(.cellule[data-statut='echouee']), .face[data-statut='echouee'] polygon {
+    fill: rgb(242 121 58 / 0.14);
+    stroke: rgb(242 121 58 / 0.8);
+  }
+  :global(.cellule[data-statut='ouverte']), .face[data-statut='ouverte'] polygon {
+    fill: rgb(196 242 74 / 0.16);
+    stroke: rgb(196 242 74 / 0.85);
+  }
+  :global(.cellule[data-statut='vierge']), .face[data-statut='vierge'] polygon {
+    fill: rgb(255 255 255 / 0.047);
+    stroke: rgb(76 74 98 / 0.55);
+  }
+
+  /* Survol et choix : le filet s'épaissit (GeodeMap.Hover : 1 → 2,2). */
+  .secteur.is-survole :global(.cellule) { stroke-width: 2.2; }
+  .secteur.is-choisi :global(.cellule) {
+    stroke-width: 2.2;
+    filter: drop-shadow(0 0 6px rgb(166 238 255 / 0.55));
+  }
+  .secteur :global(.cellule.is-focus) { stroke: #e8fbff; stroke-width: 3; }
+
+  .coupe__centre {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 25%;
+    text-align: center;
+    pointer-events: none;
+  }
+  .centre__niveau {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.1rem, 3.2vw, 2.4rem);
+    line-height: 1.05;
+    color: var(--cr-bright);
+    text-wrap: balance;
+  }
+  .centre__niveau.is-titre { font-size: clamp(0.72rem, 1.4vw, 0.95rem); color: var(--color-ink-100); }
+  .centre__detail {
+    margin-top: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.5rem, 0.9vw, 0.62rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    line-height: 1.5;
+  }
+  .coupe__aide { margin-top: 1.25rem; text-align: center; }
+
+  /* ---------- La fiche ---------- */
+  .inspecteur-wrap { position: sticky; top: 6.5rem; }
+  :global(.inspecteur) { padding: 1.9rem 1.9rem 1.6rem; }
+  .fiche { display: flex; flex-direction: column; gap: 0.85rem; }
+  .fiche[hidden] { display: none; }
+  .fiche__titre { font-size: var(--step-2); view-transition-name: fiche-titre; }
+  .fiche__resume { color: var(--color-ink-300); font-size: 0.95rem; }
+  .fiche__gemme { display: flex; align-items: center; gap: 1.5rem; margin-block: 0.5rem; }
+  .gemme { width: min(12.5rem, 45%); flex: none; overflow: visible; view-transition-name: gemme; }
+  .gemme__halo { fill: rgb(166 238 255 / 0.22); transform: scale(1.06); transform-origin: center; transform-box: fill-box; }
+  .face text {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 13px;
+    fill: rgb(236 235 244 / 0.85);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+  }
+  .face[data-statut='vierge'] text { fill: rgb(128 126 153 / 0.8); }
+  .face:hover polygon, .face.is-choisie polygon { stroke-width: 2.4; }
+  .fiche__niveau { display: flex; align-items: baseline; gap: 0.6rem; }
+  .fiche__niveau span { font-family: var(--font-display); font-weight: 500; font-size: var(--step-4); line-height: 1; }
+  .fiche__niveau small {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+    line-height: 1.5;
+  }
+  .fiche__facettes { list-style: none; display: grid; gap: 0.1rem; }
+  .fiche__facettes li {
+    display: grid;
+    grid-template-columns: 2rem 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.5rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    transition: background 0.25s;
+  }
+  .fiche__facettes li.is-choisie { background: rgb(79 208 245 / 0.08); }
+  .fiche__n { font-family: var(--font-display); font-weight: 500; color: var(--cr-deep); }
+  .fiche__nom { color: var(--color-ink-100); font-size: 0.92rem; }
+
+  /* ---------- Bandes ---------- */
+  .bande { padding-block: clamp(3.5rem, 8vw, 6rem); }
+  .bande h2 { font-size: var(--step-3); margin-block: 0.75rem 1rem; }
+  .bande h2 em { font-style: italic; }
+  .bande__lead { max-width: 60ch; color: var(--color-ink-500); margin-bottom: 2.25rem; }
+
+  .legende {
+    list-style: none;
+    display: grid;
+    gap: 0.5rem 2rem;
+    margin-top: 2rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 46rem) { .legende { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 76rem) { .legende { grid-template-columns: repeat(4, 1fr); } }
+  :global(.legende__item) { display: flex; gap: 0.9rem; align-items: flex-start; padding: 0.9rem 0; border-top: 1px solid rgb(255 255 255 / 0.07); }
+  :global(.legende__item) svg { width: 2.4rem; flex: none; }
+  :global(.legende__item) h3 { font-size: var(--step-0); color: var(--color-ink-100); }
+  :global(.legende__item) p { font-size: 0.86rem; color: var(--color-ink-500); margin-top: 0.15rem; }
+
+  .facettes {
+    list-style: none;
+    display: grid;
+    gap: 0 2rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 48rem) { .facettes { grid-template-columns: repeat(3, 1fr); } }
+  :global(.facettes__item) { padding: 1.1rem 0; border-top: 1px solid rgb(255 255 255 / 0.07); }
+  .facettes__n { font-family: var(--font-display); font-weight: 500; font-size: var(--step-3); line-height: 1; }
+  :global(.facettes__item) h3 { font-size: var(--step-1); margin-top: 0.5rem; }
+  :global(.facettes__item) p { color: var(--color-ink-500); font-size: 0.9rem; margin-top: 0.25rem; }
+
+  .cabinet {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (width >= 44rem) { .cabinet { grid-template-columns: repeat(2, 1fr); } }
+  @media (width >= 72rem) { .cabinet { grid-template-columns: repeat(3, 1fr); } }
+  .cabinet > :global(li) { height: 100%; }
+  :global(.cabinet__carte) {
+    height: 100%;
+    display: flex;
+    gap: 1.1rem;
+    align-items: flex-start;
+    padding: 1.3rem;
+  }
+  .cabinet__coupe { width: 4.6rem; flex: none; }
+  .cabinet__coupe path { fill: rgb(79 208 245 / 0.07); stroke: rgb(166 238 255 / 0.28); stroke-width: 0.6; }
+  :global(.cabinet__carte) h3 { font-size: var(--step-0); font-weight: 500; margin-top: 0.55rem; line-height: 1.25; }
+  :global(.cabinet__carte) p { color: var(--color-ink-500); font-size: 0.84rem; margin-top: 0.25rem; }
+  .cabinet__compte { font-family: var(--font-mono); font-size: 0.66rem !important; letter-spacing: 0.1em; color: var(--cr-deep) !important; }
+
+  /* Changement de cristal : seule la fiche se transforme, pas la page. Les
+     transitions de navigation du site animent la racine ; on les neutralise
+     le temps d'une transition locale (html[data-vt-local]). */
+  :global(html[data-vt-local])::view-transition-old(root),
+  :global(html[data-vt-local])::view-transition-new(root) {
+    animation: none;
+  }
+  /* Pendant une transition, la couche ::view-transition recouvre la page et
+     capte le pointeur : le secteur survolé recevait un « pointerleave » et le
+     centre de la coupe s'effaçait sous la souris. Elle laisse passer. */
+  :global(html[data-vt-local])::view-transition {
+    pointer-events: none;
+  }
+  ::view-transition-group(gemme),
+  ::view-transition-group(fiche-titre) {
+    animation-duration: 0.45s;
+    animation-timing-function: var(--ease-cosmic);
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const carte = document.querySelector<SVGSVGElement>('[data-carte]');
+    if (!carte) return;
+    const secteurs = [...carte.querySelectorAll<SVGGElement>('.secteur')];
+    const fiches = [...document.querySelectorAll<HTMLElement>('[data-fiche]')];
+    const titre = document.querySelector<HTMLElement>('[data-centre-titre]')!;
+    const detail = document.querySelector<HTMLElement>('[data-centre-detail]')!;
+    const niveauTexte = titre.textContent ?? '';
+    const detailHtml = detail.innerHTML;
+
+    let choisi = Math.max(0, secteurs.findIndex((s) => s.dataset.cristal === 'masque'));
+    let focusCristal = choisi;
+    let focusFacette = 0;
+
+    const montrerCentre = (i: number | null) => {
+      if (i === null) {
+        titre.textContent = niveauTexte;
+        titre.classList.remove('is-titre');
+        detail.innerHTML = detailHtml;
+        return;
+      }
+      const s = secteurs[i];
+      const taillees = s.querySelectorAll('[data-statut="acquise"], [data-statut="araviver"]').length;
+      titre.textContent = s.getAttribute('aria-label');
+      titre.classList.add('is-titre');
+      detail.textContent = `${taillees} / 6 facettes taillées`;
+    };
+
+    const choisirFacette = (fiche: HTMLElement, k: number | null) => {
+      fiche.querySelectorAll('[data-facette]').forEach((el) => {
+        el.classList.toggle('is-choisie', k !== null && Number((el as HTMLElement).dataset.facette) === k);
+      });
+    };
+
+    const choisir = (i: number, facette: number | null = null) => {
+      // Le clavier repart de ce qu'on vient de choisir, à la souris comme au clavier.
+      focusCristal = i;
+      if (facette !== null) focusFacette = facette;
+      const appliquer = () => {
+        choisi = i;
+        secteurs.forEach((s, j) => s.classList.toggle('is-choisi', j === i));
+        const id = secteurs[i].dataset.cristal;
+        fiches.forEach((f) => (f.hidden = f.dataset.fiche !== id));
+        const fiche = fiches.find((f) => !f.hidden);
+        if (fiche) choisirFacette(fiche, facette);
+      };
+      // View Transitions API : la gemme et le titre se transforment de l'ancien
+      // cristal au nouveau. Sans l'API (ou mouvement réduit), on change d'un coup.
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+      const reduit = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (doc.startViewTransition && !reduit && i !== choisi) {
+        document.documentElement.setAttribute('data-vt-local', '');
+        doc.startViewTransition(appliquer).finished.finally(() =>
+          document.documentElement.removeAttribute('data-vt-local'),
+        );
+      } else {
+        appliquer();
+      }
+      // Un geste est un fait : le tourbillon du site, s'il est là, le sent.
+      window.dispatchEvent(new CustomEvent('vortex:kick', { detail: 0.6 }));
+    };
+
+    secteurs.forEach((s, i) => {
+      s.addEventListener('pointerenter', () => {
+        s.classList.add('is-survole');
+        montrerCentre(i);
+      });
+      s.addEventListener('pointerleave', () => {
+        s.classList.remove('is-survole');
+        montrerCentre(null);
+      });
+      s.querySelectorAll<SVGPathElement>('.cellule').forEach((cell) => {
+        cell.addEventListener('click', () => choisir(i, Number(cell.dataset.facette)));
+      });
+    });
+
+    // Un clic sur un triangle de la gemme choisit la facette.
+    fiches.forEach((fiche) => {
+      fiche.querySelectorAll<SVGGElement>('.face').forEach((face) => {
+        face.addEventListener('click', () => choisirFacette(fiche, Number(face.dataset.facette)));
+      });
+    });
+
+    // --- Au clavier : un seul arrêt de tabulation, puis les flèches. ---
+    const marquer = () => {
+      carte.querySelectorAll('.cellule.is-focus').forEach((c) => c.classList.remove('is-focus'));
+      const cell = secteurs[focusCristal].querySelectorAll('.cellule')[focusFacette];
+      cell?.classList.add('is-focus');
+      montrerCentre(focusCristal);
+    };
+    carte.addEventListener('focus', () => {
+      focusCristal = choisi;
+      marquer();
+    });
+    carte.addEventListener('blur', () => {
+      carte.querySelectorAll('.cellule.is-focus').forEach((c) => c.classList.remove('is-focus'));
+      montrerCentre(null);
+    });
+    carte.addEventListener('keydown', (e) => {
+      const n = secteurs.length;
+      if (e.key === 'ArrowRight') focusCristal = (focusCristal + 1) % n;
+      else if (e.key === 'ArrowLeft') focusCristal = (focusCristal - 1 + n) % n;
+      else if (e.key === 'ArrowDown') focusFacette = Math.min(5, focusFacette + 1);
+      else if (e.key === 'ArrowUp') focusFacette = Math.max(0, focusFacette - 1);
+      else if (e.key === 'Enter' || e.key === ' ') {
+        choisir(focusCristal, focusFacette);
+      } else return;
+      e.preventDefault();
+      marquer();
+    });
+
+    secteurs[choisi]?.classList.add('is-choisi');
+  });
+</script>

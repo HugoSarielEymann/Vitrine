@@ -1,0 +1,131 @@
+---
+/**
+ * Mise en page des pages du dialecte cristal.
+ *
+ * Base.astro, avec la matière changée (`dialect="cristal"`), plus trois choses
+ * propres au dialecte :
+ *  - une sous-navigation en facettes entre les quatre pages ;
+ *  - le moniteur de fluidité (Ctrl+Maj+F) ;
+ *  - la mémoire des pages visitées, qui allume les orbes du tourbillon de
+ *    l'accueil du dialecte : un orbe allumé = une page vraiment vue.
+ */
+import Base from './Base.astro';
+import Fluidite from '../components/Fluidite.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Clé de la page, pour la sous-navigation et la mémoire des visites. */
+  page: 'oeil' | 'geode' | 'graine' | 'matiere';
+  intensity?: number;
+}
+const { title, description, page, intensity = 0.9 } = Astro.props;
+
+const PAGES = [
+  { key: 'oeil', href: '/cristal', label: 'L’œil d’ORT' },
+  { key: 'geode', href: '/cristal/geode', label: 'La géode' },
+  { key: 'graine', href: '/cristal/graine', label: 'Le chemin' },
+  { key: 'matiere', href: '/cristal/matiere', label: 'La matière' },
+] as const;
+---
+
+<Base title={title} description={description} dialect="cristal" intensity={intensity}>
+  <nav class="cr-tabs shell" aria-label="Pages du dialecte cristal">
+    <span class="cr-label">Dialecte <strong>cristal</strong></span>
+    <ol>
+      {
+        PAGES.map((p, i) => (
+          <li>
+            <a
+              href={p.href}
+              class:list={['cr-tab', { 'is-current': p.key === page }]}
+              aria-current={p.key === page ? 'page' : undefined}
+            >
+              <span class="cr-tab__n">{String(i + 1).padStart(2, '0')}</span>
+              {p.label}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  <slot />
+
+  <Fluidite />
+
+  <script is:inline define:vars={{ page }}>
+    // Mémoire des visites : rien de personnel, rien qui sorte du navigateur.
+    // Si le stockage est refusé (navigation privée), les orbes restent éteints.
+    try {
+      const KEY = 'cristal:visites';
+      const seen = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+      seen.add(page);
+      localStorage.setItem(KEY, JSON.stringify([...seen]));
+    } catch {}
+  </script>
+</Base>
+
+
+
+<style>
+  .cr-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    padding-block: 1.25rem 0;
+  }
+  .cr-tabs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    list-style: none;
+  }
+  /* Un onglet est une facette : hexagone allongé, filet glacé. La page
+     courante est la seule pleine — le cristal reste rare. */
+  .cr-tab {
+    --tip: 0.75em;
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 1.35rem;
+    font-size: 0.84rem;
+    color: var(--color-ink-300);
+    transition: color 0.3s;
+  }
+  .cr-tab::before,
+  .cr-tab::after {
+    content: '';
+    position: absolute;
+    clip-path: polygon(
+      var(--tip) 0, calc(100% - var(--tip)) 0, 100% 50%,
+      calc(100% - var(--tip)) 100%, var(--tip) 100%, 0 50%
+    );
+  }
+  .cr-tab::before {
+    inset: 0;
+    z-index: -2;
+    background: rgb(255 255 255 / 0.1);
+    transition: background 0.3s;
+  }
+  .cr-tab::after {
+    inset: 1px;
+    z-index: -1;
+    background: rgb(11 8 23 / 0.85);
+  }
+  .cr-tab:hover { color: var(--color-ink-100); }
+  .cr-tab:hover::before { background: rgb(79 208 245 / 0.45); }
+  .cr-tab__n {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-500);
+  }
+  .cr-tab.is-current { color: #071a33; font-weight: 600; }
+  .cr-tab.is-current::before { background: linear-gradient(135deg, #f2fdff, #a6eeff 40%, #4fc4ee 75%, #3a86d8); }
+  .cr-tab.is-current::after { display: none; }
+  .cr-tab.is-current .cr-tab__n { color: #173f7e; }
+</style>
