@@ -380,6 +380,9 @@
 [data-sens='braise'] { --sens: #f2793a; }
 [data-sens='vierge'] { --sens: #807e99; }
 
+.fiche-lien { transition: letter-spacing 0.4s var(--ease-cosmic); }
+.fiche-lien:hover { letter-spacing: 0.26em; }
+
 /* L'étiquette d'atelier, en cristal profond. */
 .cr-label {
   font-family: var(--font-mono);
